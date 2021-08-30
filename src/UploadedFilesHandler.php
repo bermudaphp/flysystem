@@ -1,7 +1,9 @@
 <?php
 
-namespace Bermuda\Files\Filepond;
+namespace Bermuda\Files;
 
+use Bermuda\Utils\Header;
+use Bermuda\Utils\ContentType;
 use League\Flysystem\FilesystemOperator;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
@@ -115,12 +117,12 @@ final class UploadedFilesHandler implements RequestHandlerInterface
 
         if (count($filesIDs) > 1)
         {
-            $contentType = 'application/json';
+            $contentType = MimeType::applicationJson;
             $filesIDs = \json_encode($filesIDs);
         }
 
         ($response = $this->responseFactory->createResponse(201)
-            ->withHeader('Content-Type', $contentType ?? 'text/plain'))
+            ->withHeader(Header::contentType, $contentType ?? MimeType::plain))
             ->getBody()->write(is_string($filesIDs)
                 ? $filesIDs : $filesIDs[0]);
 
@@ -166,10 +168,12 @@ final class UploadedFilesHandler implements RequestHandlerInterface
     private function handleValidationException(UploadedFileValidationExtension $e): ResponseInterface
     {
         ($r = $this->responseFactory->createResponse(400)
-            ->withHeader('Content-Type', 'application/json'))
-        ->getBody()
-            ->write(\json_encode(['errors' => $e->getErrors()]));
-
+            ->withHeader(Header::contentType, MimeType::applicationJson))
+                ->getBody()
+                    ->write(\json_encode([
+                        'errors' => $e->getErrors()
+                    ]));
+        
         return $r;
     }
 }
