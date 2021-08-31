@@ -282,7 +282,7 @@ class File implements \Stringable, StreamInterface, \IteratorAggregate
      * @return array
      * @throws \League\Flysystem\FilesystemException
      */
-    public function info(): array
+    public function toArray(): array
     {
         return [
             'filename' => $this->filename,
