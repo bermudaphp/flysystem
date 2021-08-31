@@ -135,7 +135,7 @@ class File implements \Stringable, StreamInterface, \IteratorAggregate
 
     private function normalizePath(string $path): string
     {
-        return str_replace(['\/'], DIRECTORY_SEPARATOR, $path);
+        return str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path);
     }
 
     /**
@@ -262,6 +262,12 @@ class File implements \Stringable, StreamInterface, \IteratorAggregate
      */
     final public function move(string $destination): void
     {
+        if ((new FileInfo($destination, $this->system))->isDirectory())
+        {
+            $destination = rtrim($destination, '\/') .
+               DIRECTORY_SEPARATOR . $this->getName();
+        }
+
         $this->system->move($this->filename, $destination);
         $this->filename = $destination;
 
