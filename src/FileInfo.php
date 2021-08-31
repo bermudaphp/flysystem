@@ -13,7 +13,7 @@ final class FileInfo
      */
     public function __construct(private string $path, private ?FilesystemOperator $system = null)
     {
-        $this->system = FileSystemFactory::makeSystem();
+        $this->system = $system ?? FileSystemFactory::makeSystem();
 
         if (!$this->system->fileExists($this->path))
         {
