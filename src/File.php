@@ -64,8 +64,10 @@ class File implements \Stringable, StreamInterface, \IteratorAggregate
         } catch (\InvalidArgumentException $e)
         {
             throw new \InvalidArgumentException(
-                'Argument [$filename] for % must be valid path to file',
-                __METHOD__
+                sprintf(
+                    'Argument [$filename] for %s must be valid path to file',
+                    __METHOD__
+                )
             );
         }
 
