@@ -155,6 +155,11 @@ final class UploadedFilesHandler implements RequestHandlerInterface
         $files = [];
 
         is_array($filesIDs) ?: $filesIDs = [$filesIDs];
+        
+        if (!$this->system->fileExists(self::$storageDir))
+        {
+            $this->system->createDirectory(self::$storageDir);
+        }
 
         foreach ($filesIDs as $fileID)
         {
