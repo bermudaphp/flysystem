@@ -15,7 +15,7 @@ final class FileInfo
     {
         $this->system = FileSystemFactory::makeSystem();
 
-        if ($this->system->fileExists($this->path))
+        if (!$this->system->fileExists($this->path))
         {
             throw new \InvalidArgumentException(
                 sprintf('Argument [path] for %s must be valid path to file or directory',
