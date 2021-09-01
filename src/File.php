@@ -61,7 +61,7 @@ class File implements \Stringable, StreamInterface, \IteratorAggregate
     {
         $system !== null ?: $system = FileSystemFactory::makeSystem();
 
-        if ($system->fileExists($filename))
+        if (!$system->fileExists($filename))
         {
             throw new \InvalidArgumentException(
                 sprintf(
