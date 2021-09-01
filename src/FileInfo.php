@@ -7,143 +7,48 @@ use League\Flysystem\FilesystemOperator;
 final class FileInfo
 {
     /**
-     * @param string $path
-     * @param FilesystemOperator|null $system
+     * @param string $filename
+     * @param FilesystemOperator $system
+     * @return string
      * @throws \League\Flysystem\FilesystemException
      */
-    public function __construct(private string $path, private ?FilesystemOperator $system = null)
+    public static function extension(string $filename, FilesystemOperator $system): string
     {
-        $this->system = $system ?? FileSystemFactory::makeSystem();
-
-        if (!$this->system->fileExists($path) && !$this->isDirectory())
-        {
-            throw new \InvalidArgumentException(
-                sprintf('Argument [path] for %s must be valid path to file or directory',
-                    __METHOD__
-                )
-            );
-        }
-    }
-
-    /**
-     * @return FilesystemOperator
-     */
-    public function getSystem(): FilesystemOperator
-    {
-        return $this->system;
-    }
-
-    /**
-     * @param string $filename
-     * @param bool $strict
-     * @return string
-     */
-    public static function extension(string $filename, bool $strict): string
-    {
-        return !$strict ? pathinfo($filename, PATHINFO_EXTENSION)
-            : (new \finfo(FILEINFO_EXTENSION))->file($filename);
-    }
-
-    /**
-     * @param string $filename
-     * @param bool $strict
-     * @return string
-     */
-    public static function filesize(string $filename): int
-    {
-        return filesize($filename);
-    }
-
-    /**
-     * @param string $filename
-     * @return string
-     */
-    public static function mimeType(string $filename): string
-    {
-        $type = @(new \finfo(FILEINFO_MIME_TYPE))->file($filename);
-
-        if ($type === false)
-        {
-            throw new \RuntimeException(error_get_last()['message']);
-        }
-
-        return $type;
-    }
-
-    /**
-     * @param bool $strict
-     * @return string
-     */
-    public function getFileExtension(bool $strict = true): string
-    {
-        return self::extension($this->path, $strict);
+        $content = $system->read($filename);
+        return (new \finfo(FILEINFO_EXTENSION))->buffer($content);
     }
 
     /**
      * @param string $path
+     * @param FilesystemOperator $system
      * @return bool
+     * @throws \League\Flysystem\FilesystemException
      */
-    public static function isFile(string $path): bool
+    public static function isDirectory(string $path, FilesystemOperator $system): bool
     {
-        return is_file($path);
+        return strtolower($system->mimeType($path)) == 'directory';
     }
 
     /**
-     * @param string $path
+     * @param string $filename
+     * @param FilesystemOperator $system
      * @return bool
+     * @throws \League\Flysystem\FilesystemException
      */
-    public static function isDir(string $path): bool
+    public static function isImage(string $filename, FilesystemOperator $system): bool
     {
-        return is_dir($path);
-    }
-
-    /**
-     * @param string $path
-     * @return bool
-     */
-    public static function isImg(string $path): bool
-    {
-        return self::isFile($path) && self::isImageMimeType(self::mimeType($path));
-    }
-
-    private static function detectImageType(string $mimeType): bool
-    {
+        $mimeType = $system->mimeType($filename);
         return str_contains(strtolower($mimeType), 'image');
     }
 
     /**
      * @param string $path
-     * @return bool
-     */
-    public static function exists(string $path): bool
-    {
-        return file_exists($path);
-    }
-
-    /**
+     * @param FilesystemOperator $system
      * @return bool
      * @throws \League\Flysystem\FilesystemException
      */
-    public function isDirectory(): bool
+    public static function exists(string $path, FilesystemOperator $system): bool
     {
-        return $this->system->mimeType($this->path) == 'directory';
-    }
-
-    /**
-     * @return bool
-     * @throws \League\Flysystem\FilesystemException
-     */
-    public function isImage(): bool
-    {
-        return self::detectImageType($this->getMimeType());
-    }
-
-    /**
-     * @return string
-     * @throws \League\Flysystem\FilesystemException
-     */
-    public function getMimeType(): string
-    {
-        return $this->system->mimeType($this->path);
+        return $system->fileExists($path) || self::isDirectory($path, $system);
     }
 }
