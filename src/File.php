@@ -55,7 +55,7 @@ class File implements \Stringable, StreamInterface, \IteratorAggregate
      * @throws \League\Flysystem\FilesystemException
      * @throws \InvalidArgumentException
      */
-    public static function open(string $filename, ?FilesystemOperator $system = null,
+    final public static function open(string $filename, ?FilesystemOperator $system = null,
                                 ?StreamFactoryInterface $streamFactory = null,
                                 int $bytesPerIteration = 1024
     ): self
@@ -89,7 +89,7 @@ class File implements \Stringable, StreamInterface, \IteratorAggregate
      * @return static
      * @throws \League\Flysystem\FilesystemException
      */
-    public static function create(string $content, string $filename, ?FilesystemOperator $system = null,
+    final public static function create(string $content, string $filename, ?FilesystemOperator $system = null,
                                   ?StreamFactoryInterface $streamFactory = null,
                                   int $bytesPerIteration = 1024
     ): self
