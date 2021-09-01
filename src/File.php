@@ -53,15 +53,16 @@ class File implements \Stringable, StreamInterface, \IteratorAggregate
      * @param int $bytesPerIteration
      * @return static
      * @throws \League\Flysystem\FilesystemException
+     * @throws \InvalidArgumentException
      */
     public static function open(string $filename, ?FilesystemOperator $system = null,
                                 ?StreamFactoryInterface $streamFactory = null,
                                 int $bytesPerIteration = 1024
     ): self
     {
-        try {
-            $fileInfo = new FileInfo($filename, $system);
-        } catch (\InvalidArgumentException $e)
+        $system !== null ?: $system = FileSystemFactory::makeSystem();
+
+        if ($system->fileExists($filename))
         {
             throw new \InvalidArgumentException(
                 sprintf(
@@ -71,28 +72,32 @@ class File implements \Stringable, StreamInterface, \IteratorAggregate
             );
         }
 
-        if (!$fileInfo->isImage())
+        if (FileInfo::isImage($filename, $system))
         {
-            return new Image($filename, $fileInfo->getSystem(), $streamFactory, $bytesPerIteration);
+            return new Image($filename, $system, $streamFactory, $bytesPerIteration);
         }
 
-        return new self($filename, $fileInfo->getSystem(), $streamFactory, $bytesPerIteration);
+        return new self($filename, $system, $streamFactory, $bytesPerIteration);
     }
 
     /**
      * @param string $content
-     * @param string|null $filename
+     * @param string $filename
      * @param FilesystemOperator|null $system
      * @param StreamFactoryInterface|null $streamFactory
      * @param int $bytesPerIteration
      * @return static
+     * @throws \League\Flysystem\FilesystemException
      */
-    public static function create(string $content, ?string $filename = null, ?FilesystemOperator $system = null,
+    public static function create(string $content, string $filename, ?FilesystemOperator $system = null,
                                   ?StreamFactoryInterface $streamFactory = null,
                                   int $bytesPerIteration = 1024
     ): self
     {
-        // TODO implements creation file logic
+        $system !== null ?: $system = FileSystemFactory::makeSystem();
+        $system->write($filename, $content);
+
+        return self::open($filename, $system, $streamFactory, $bytesPerIteration);
     }
 
     /**
@@ -135,7 +140,7 @@ class File implements \Stringable, StreamInterface, \IteratorAggregate
 
     private function normalizePath(string $path): string
     {
-        return str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path);
+        return str_replace(['\\'], '/', $path);
     }
 
     /**
@@ -171,7 +176,7 @@ class File implements \Stringable, StreamInterface, \IteratorAggregate
         {
             $segments = $this->getSegments();
             array_pop($segments);
-            return $this->path = implode(DIRECTORY_SEPARATOR, $segments);
+            return $this->path = implode('/', $segments);
         }
 
         return $this->path;
@@ -183,12 +188,12 @@ class File implements \Stringable, StreamInterface, \IteratorAggregate
      */
     final public function rename(string $name): void
     {
-        if (str_contains($name, '.'))
+        if (!str_contains($name, '.'))
         {
-            $name = $name . $this->getExtension();
+            $name = sprintf('%s.%s', $name, $this->getExtension());
         }
 
-        $this->move($filename = $this->getPath() . DIRECTORY_SEPARATOR . $name);
+        $this->move($filename = $this->getPath() . '/' . $name);
         $this->filename = $filename;
         $this->name = $name;
     }
@@ -217,12 +222,13 @@ class File implements \Stringable, StreamInterface, \IteratorAggregate
 
     /**
      * @return string
+     * @throws \League\Flysystem\FilesystemException
      */
     final public function getExtension(): string
     {
         if ($this->extension == null)
         {
-            return $this->extension = FileInfo::extension($this->filename, true);
+            return $this->extension = FileInfo::extension($this->filename, $this->system);
         }
 
         return $this->extension;
@@ -262,10 +268,10 @@ class File implements \Stringable, StreamInterface, \IteratorAggregate
      */
     final public function move(string $destination): void
     {
-        if ((new FileInfo($destination, $this->system))->isDirectory())
+        if (FileInfo::isDirectory($destination, $this->system))
         {
             $destination = rtrim($destination, '\/') .
-               DIRECTORY_SEPARATOR . $this->getName();
+                '/' . $this->getName();
         }
 
         $this->system->move($this->filename, $destination);
@@ -290,7 +296,7 @@ class File implements \Stringable, StreamInterface, \IteratorAggregate
      * @return array
      * @throws \League\Flysystem\FilesystemException
      */
-    public function toArray(): array
+    public function info(): array
     {
         return [
             'filename' => $this->filename,
