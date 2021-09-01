@@ -28,12 +28,11 @@ class File implements \Stringable, StreamInterface, \IteratorAggregate
      * @throws \League\Flysystem\FilesystemException
      */
     private function __construct(private string $filename,
-        private ?FilesystemOperator $system = null,
+        private FilesystemOperator $system,
         ?StreamFactoryInterface $streamFactory = null,
         private int $bytesPerIteration = 1024
     )
     {
-        $this->system = FileSystemFactory::makeSystem();
         $this->filename = $this->normalizePath($filename);
         $this->streamFactory = $streamFactory ?? new Psr17Factory();
     }
