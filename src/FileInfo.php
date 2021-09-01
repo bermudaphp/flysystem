@@ -15,7 +15,7 @@ final class FileInfo
     {
         $this->system = $system ?? FileSystemFactory::makeSystem();
 
-        if (!$this->system->fileExists($this->path))
+        if (!$this->system->fileExists($path) && !$this->isDirectory())
         {
             throw new \InvalidArgumentException(
                 sprintf('Argument [path] for %s must be valid path to file or directory',
@@ -106,9 +106,9 @@ final class FileInfo
         return self::isFile($path) && self::isImageMimeType(self::mimeType($path));
     }
 
-    private static function isImageMimeType(string $type): bool
+    private static function detectImageType(string $mimeType): bool
     {
-        return str_contains(strtolower($type), 'image');
+        return str_contains(strtolower($mimeType), 'image');
     }
 
     /**
@@ -135,7 +135,7 @@ final class FileInfo
      */
     public function isImage(): bool
     {
-        return self::isImageMimeType($this->getMimeType());
+        return self::detectImageType($this->getMimeType());
     }
 
     /**
