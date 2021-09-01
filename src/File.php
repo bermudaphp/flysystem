@@ -152,7 +152,7 @@ class File implements \Stringable, StreamInterface, \IteratorAggregate
 
     private function getSegments(): array
     {
-        return explode(DIRECTORY_SEPARATOR, $this->filename);
+        return explode('/', $this->filename);
     }
 
     /**
