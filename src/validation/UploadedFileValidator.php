@@ -35,7 +35,7 @@ final class UploadedFileValidator implements UploadedFileValidatorInterface
     public function __construct(
         private string|array $mimeType,
         private string|array $extension,
-        private ?int          $filesize,
+        private ?int         $filesize,
     )
     {
         $this->mimeType = is_array($mimeType) ? $mimeType : [$mimeType];
