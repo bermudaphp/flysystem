@@ -1,6 +1,6 @@
 <?php
 
-namespace Bermuda\Files;
+namespace Bermuda\Flysystem;
 
 use Bermuda\Iterator\StreamIterator;
 use League\Flysystem\FilesystemOperator;
