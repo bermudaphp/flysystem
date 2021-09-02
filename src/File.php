@@ -16,7 +16,6 @@ class File extends FlysystemData implements StreamInterface
     private $fileHandler = null;
     private ?StreamInterface $stream = null;
 
-    private ?int $filesize = null;
     private ?string $extension = null;
     private ?string $mimeType = null;
 
@@ -69,15 +68,15 @@ class File extends FlysystemData implements StreamInterface
     }
 
     /**
+     * @param string|null $filename
      * @param string $content
-     * @param string $filename
      * @param FilesystemOperator|null $system
      * @param StreamFactoryInterface|null $streamFactory
      * @param int $bytesPerIteration
      * @return static
      * @throws \League\Flysystem\FilesystemException
      */
-    public static function create(string $content, ?string $filename = null, ?FilesystemOperator $system = null,
+    public static function create(?string $filename = null, string $content = '', ?FilesystemOperator $system = null,
                                   ?StreamFactoryInterface $streamFactory = null,
                                   int $bytesPerIteration = 1024
     ): self
@@ -86,10 +85,20 @@ class File extends FlysystemData implements StreamInterface
         {
             $extension = FileInfo::extension($content);
             $filename  = Str::filename($extension);
+
+            ($system = self::system($system))->write($filename, $content);
+            return self::open($filename, $system, $streamFactory, $bytesPerIteration);
         }
 
-        ($system = self::system($system))->write($filename, $content);
-        return self::open($filename, $system, $streamFactory, $bytesPerIteration);
+        try {
+            return self::open($filename, $system, $streamFactory, $bytesPerIteration);
+        }
+
+        catch (\InvalidArgumentException $e)
+        {
+            ($system = self::system($system))->write($filename, $content);
+            return self::open($filename, $system, $streamFactory, $bytesPerIteration);
+        }
     }
     
     /**
@@ -149,7 +158,7 @@ class File extends FlysystemData implements StreamInterface
             $name = sprintf('%s.%s', $name, $this->getExtension());
         }
 
-        $this->move($filename = $this->getPath() . '/' . $name);
+        $this->move($filename = $this->getPath() . static::separator . $name);
         $this->location = $filename;
         $this->name = $name;
     }
@@ -202,14 +211,9 @@ class File extends FlysystemData implements StreamInterface
      * @return int
      * @throws \League\Flysystem\FilesystemException
      */
-    final public function getFileSize(): int
+    final public function getSize(): int
     {
-        if ($this->filesize == null)
-        {
-            return $this->filesize = $this->system->fileSize($this->location);
-        }
-
-        return $this->filesize;
+        return $this->system->fileSize($this->location);
     }
 
     /**
@@ -221,7 +225,7 @@ class File extends FlysystemData implements StreamInterface
         if (FileInfo::isDirectory($destination, $this->system))
         {
             $destination = rtrim($destination, '\/') .
-                '/' . $this->getName();
+                static::separator . $this->getName();
         }
 
         $this->system->move($this->location, $destination);
@@ -235,11 +239,17 @@ class File extends FlysystemData implements StreamInterface
 
     /**
      * @param string $destination
+     * @param bool $destinationIsDir
      * @throws \League\Flysystem\FilesystemException
      */
-    final public function copy(string $destination): void
+    final public function copy(string $destination, bool $destinationIsDir = false): self
     {
-        $this->system->copy($this->location, $destination);
+        if ($destinationIsDir)
+        {
+            $destination = $this->normalizePath($destination) . static::separator . $this->getName();
+        }
+
+        return self::create($destination, $this->getContents(), $this->system, $this->streamFactory);
     }
 
     /**
@@ -252,7 +262,7 @@ class File extends FlysystemData implements StreamInterface
             'filename' => $this->location,
             'extension' => $this->getExtension(),
             'mimeType' => $this->getMimeType(),
-            'size' => $this->getFileSize(),
+            'size' => $this->getSize(),
             'modified' => $this->lastModified(),
         ];
     }
