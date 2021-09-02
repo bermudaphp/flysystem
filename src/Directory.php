@@ -2,8 +2,6 @@
 
 namespace Bermuda\Flysystem;
 
-use League\Flysystem\DirectoryAttributes;
-use League\Flysystem\FileAttributes;
 use League\Flysystem\FilesystemOperator;
 use Psr\Http\Message\StreamFactoryInterface;
 
@@ -17,20 +15,22 @@ final class Directory extends FlysystemData implements \Countable
      * @throws \League\Flysystem\FilesystemException
      */
     public static function open(
-        string $location, ?FilesystemOperator $system = null,
-        ?StreamFactoryInterface $streamFactory = null
+        string $location, ?Flysystem $system = null
     ): self
     {
-        $system = self::system($system);
+        if ($system === null)
+        {
+            $system = new Flysystem();
+        }
 
-        if (!FileInfo::isDirectory($location, $system))
+        if (!$system->isDirectory($location))
         {
             throw new \InvalidArgumentException(
                 sprintf('No such directory: %s', $location)
             );
         }
 
-        return new self($location, $system, $streamFactory);
+        return new self($location, $system);
     }
 
     /**
@@ -48,35 +48,40 @@ final class Directory extends FlysystemData implements \Countable
      * @return static
      * @throws \League\Flysystem\FilesystemException
      */
-    public static function create(string $location, ?FilesystemOperator $system = null,
-                                  ?StreamFactoryInterface $streamFactory = null,
+    public static function create(string $location, ?Flysystem $system = null
     ): self
     {
         try {
-            return self::open($location, $system, $streamFactory);
+            return self::open($location, $system);
         }
 
         catch (\InvalidArgumentException $e)
         {
-            ($system = self::system($system))->createDirectory($location);
-            return self::open($location, $system, $streamFactory);
+            if ($system === null)
+            {
+                $system = new Flysystem();
+            }
+
+            $system->getOperator()->createDirectory($location);
+            return self::open($location, $system);
         }
     }
-    
+
     /**
      * @param self[] $directories
      * @param bool $deleteMerged
+     * @throws \League\Flysystem\FilesystemException
      */
     public function merge(array $directories, bool $deleteMerged = false): void
     {
         foreach ($directories as $directory)
         {
             /**
-             * @var File|self $fileOrDirectory
+             * @var File|self $flysystemData
              */
-            foreach ($directory as $fileOrDirectory)
+            foreach ($directory as $flysystemData)
             {
-                $fileOrDirectory->copy($this->location, true);
+                $flysystemData->copy($this->location, true);
             }
 
             if ($deleteMerged)
@@ -88,14 +93,14 @@ final class Directory extends FlysystemData implements \Countable
 
     /**
      * @param string $destination
-     * @param bool $destinationIsDir
+     * @return Directory
      * @throws \League\Flysystem\FilesystemException
      */
     final public function copy(string $destination): self
     {
         $destination = $this->normalizePath($destination);
 
-        $directory = self::create($destination, $this->system, $this->streamFactory);
+        $directory = self::create($destination, $this->flysystem);
 
         foreach ($this as $flysystemData)
         {
@@ -131,7 +136,7 @@ final class Directory extends FlysystemData implements \Countable
     public function exists(string $path): bool
     {
         $path = $this->location . self::separator . $this->normalizePath($path);
-        return FileInfo::exists($path, $this->system);
+        return $this->flysystem->exists($path);
     }
 
     // public function isRoot(): bool{}
@@ -142,7 +147,7 @@ final class Directory extends FlysystemData implements \Countable
      */
     public function isEmpty(): bool
     {
-        foreach ($this->system->listContents($this) as $item)
+        foreach ($this->flysystem->getOperator()->listContents($this->location) as $i)
         {
             return false;
         }
@@ -183,9 +188,12 @@ final class Directory extends FlysystemData implements \Countable
         }
     }
 
+    /**
+     * @throws \League\Flysystem\FilesystemException
+     */
     public function delete(): void
     {
-        $this->system->deleteDirectory($this->location);
+        $this->flysystem->getOperator()->deleteDirectory($this->location);
     }
 
     /**
@@ -224,7 +232,7 @@ final class Directory extends FlysystemData implements \Countable
     public function addNewDirectory(string $location): self
     {
         $location = $this->normalizePath($location);
-        return self::create($this->location . self::separator . $location, $this->system, $this->streamFactory);
+        return self::create($this->location . self::separator . $location, $this->flysystem);
     }
 
     /**
@@ -232,7 +240,7 @@ final class Directory extends FlysystemData implements \Countable
      */
     public function getFiles(): array
     {
-        return $this->listContents(static fn($v) => $v instanceof File);
+        return $this->listContents('/', static fn($v) => $v instanceof File);
     }
 
     /**
@@ -241,41 +249,18 @@ final class Directory extends FlysystemData implements \Countable
      */
     public function getChildes(): array
     {
-        return $this->listContents(static fn($v) => $v instanceof self);
+        return $this->listContents('/', static fn($v) => $v instanceof self);
     }
 
     /**
+     * @param string $path
+     * @param callable|null $filter
      * @return array
      * @throws \League\Flysystem\FilesystemException
      */
-    public function listContents(callable $filter = null): array
+    public function listContents(string $path = '/', callable $filter = null): array
     {
-        $listing = [];
-
-        foreach ($this->system->listContents($this->location) as $attribute)
-        {
-            if ($attribute instanceof FileAttributes)
-            {
-                $attribute = File::open($attribute->path(), $this->system, $this->streamFactory);
-            }
-
-            else
-            {
-                /**
-                 * @var DirectoryAttributes $attribute
-                 */
-                $attribute = Directory::open($attribute->path(), $this->system, $this->streamFactory);
-            }
-
-            if ($filter !== null && !$filter($attribute))
-            {
-                continue;
-            }
-
-            $listing[] = $attribute;
-        }
-
-        return $listing;
+        return $this->flysystem->listContents($this->location . self::separator . $path, $filter);
     }
 
     /**
