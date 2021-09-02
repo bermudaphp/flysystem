@@ -7,15 +7,32 @@ use League\Flysystem\FilesystemOperator;
 final class FileInfo
 {
     /**
-     * @param string $filename
-     * @param FilesystemOperator $system
+     * @param string $filenameOrContent
+     * @param FilesystemOperator|null $system
      * @return string
-     * @throws \League\Flysystem\FilesystemException
      */
-    public static function extension(string $filename, FilesystemOperator $system): string
+    public static function extension(string $filenameOrContent, ?FilesystemOperator $system = null): string
     {
-        $content = $system->read($filename);
-        return (new \finfo(FILEINFO_EXTENSION))->buffer($content);
+        return self::finfoBuffer(FILEINFO_EXTENSION, $filenameOrContent, $system);
+    }
+
+    /**
+     * @param string $filenameOrContent
+     * @param FilesystemOperator|null $system
+     * @return string
+     */
+    public static function mimeType(string $filenameOrContent, ?FilesystemOperator $system = null): string
+    {
+        return self::finfoBuffer(FILEINFO_MIME_TYPE, $filenameOrContent, $system);
+    }
+
+    private static function finfoBuffer(
+        string $mode, string
+        $filenameOrContent,
+        ?FilesystemOperator $system = null): string
+    {
+        $content = $system === null ? $filenameOrContent : $system->read($filenameOrContent);
+        return (new \finfo($mode))->buffer($content);
     }
 
     /**
