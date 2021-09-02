@@ -14,6 +14,8 @@ abstract class FlysystemData implements Stringable, Arrayable, \IteratorAggregat
     protected ?int $lastModified = null;
     protected ?string $path = null;
 
+    protected const separator = '/';
+
     protected function __construct(protected string $location, protected FilesystemOperator $system,
                                 protected ?StreamFactoryInterface $streamFactory = null)
     {
@@ -31,20 +33,22 @@ abstract class FlysystemData implements Stringable, Arrayable, \IteratorAggregat
         {
             $segments = $this->getSegments();
             array_pop($segments);
-            return $this->path = implode('/', $segments);
+            return $this->path = implode(static::separator, $segments);
         }
 
         return $this->path;
     }
-    
+
+    abstract public function getSize(): int ;
+
     protected function getSegments(): array
     {
-        return explode('/', $this->location);
+        return explode(static::separator, str_replace(['\\'], static::separator, $this->location));
     }
 
     protected function normalizePath(string $path): string
     {
-        return str_replace(['\\'], '/', $path);
+        return rtrim(str_replace(['\\'], static::separator, $path), '\\');
     }
 
     /**
@@ -53,12 +57,7 @@ abstract class FlysystemData implements Stringable, Arrayable, \IteratorAggregat
      */
     final public function lastModified(): int
     {
-        if ($this->lastModified == null)
-        {
-            $this->lastModified = $this->system->lastModified($this->location);
-        }
-
-        return $this->lastModified;
+        return $this->system->lastModified($this->location);
     }
 
     /**
