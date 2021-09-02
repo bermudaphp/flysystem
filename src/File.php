@@ -2,10 +2,8 @@
 
 namespace Bermuda\Flysystem;
 
-use Bermuda\Iterator\StreamIterator;
 use Bermuda\String\Str;
-use League\Flysystem\FilesystemOperator;
-use Psr\Http\Message\StreamFactoryInterface;
+use Bermuda\Iterator\StreamIterator;
 use Psr\Http\Message\StreamInterface;
 
 class File extends FlysystemData implements StreamInterface
@@ -20,14 +18,15 @@ class File extends FlysystemData implements StreamInterface
     private ?string $mimeType = null;
 
     /**
-     * @throws \League\Flysystem\FilesystemException
+     * @param string $filename
+     * @param Flysystem $flysystem
+     * @param int $bytesPerIteration
      */
-    private function __construct(string $filename, FilesystemOperator $system,
-        ?StreamFactoryInterface $streamFactory = null,
+    private function __construct(string $filename, Flysystem $flysystem,
         private int $bytesPerIteration = 1024
     )
     {
-        parent::__construct($filename, $system, $streamFactory);
+        parent::__construct($filename, $flysystem);
     }
 
     /**
@@ -40,64 +39,70 @@ class File extends FlysystemData implements StreamInterface
 
     /**
      * @param string $filename
-     * @param FilesystemOperator|null $system
-     * @param StreamFactoryInterface|null $streamFactory
+     * @param Flysystem|null $system
      * @param int $bytesPerIteration
      * @return static
      * @throws \League\Flysystem\FilesystemException
-     * @throws \InvalidArgumentException
      */
-    public static function open(string $filename, ?FilesystemOperator $system = null,
-                                ?StreamFactoryInterface $streamFactory = null,
-                                int $bytesPerIteration = 1024
+    public static function open(
+        string $filename, ?Flysystem $system = null,
+        int $bytesPerIteration = 1024
     ): self
     {
-        if (!($system = self::system($system))->fileExists($filename))
+        if ($system === null)
+        {
+            $system = new Flysystem();
+        }
+
+        if (!$system->isFile($filename))
         {
             throw new \InvalidArgumentException(
                 sprintf('No such file: %s', $filename)
             );
         }
 
-        if (FileInfo::isImage($filename, $system))
+        if ($system->isImage($filename))
         {
-            return new Image($filename, $system, $streamFactory, $bytesPerIteration);
+            return new Image($filename, $system, $bytesPerIteration);
         }
 
-        return new self($filename, $system, $streamFactory, $bytesPerIteration);
+        return new self($filename, $system, $bytesPerIteration);
     }
 
     /**
      * @param string|null $filename
      * @param string $content
-     * @param FilesystemOperator|null $system
-     * @param StreamFactoryInterface|null $streamFactory
+     * @param Flysystem|null $system
      * @param int $bytesPerIteration
      * @return static
      * @throws \League\Flysystem\FilesystemException
      */
-    public static function create(?string $filename = null, string $content = '', ?FilesystemOperator $system = null,
-                                  ?StreamFactoryInterface $streamFactory = null,
+    public static function create(?string $filename = null, string $content = '', Flysystem $system = null,
                                   int $bytesPerIteration = 1024
     ): self
     {
+        if ($system === null)
+        {
+            $system = new Flysystem();
+        }
+
         if ($filename === null)
         {
-            $extension = FileInfo::extension($content);
+            $extension = $system->extension($content);
             $filename  = Str::filename($extension);
 
-            ($system = self::system($system))->write($filename, $content);
-            return self::open($filename, $system, $streamFactory, $bytesPerIteration);
+            $system->getOperator()->write($filename, $content);
+            return self::open($filename, $system, $bytesPerIteration);
         }
 
         try {
-            return self::open($filename, $system, $streamFactory, $bytesPerIteration);
+            return self::open($filename, $system, $bytesPerIteration);
         }
 
         catch (\InvalidArgumentException $e)
         {
-            ($system = self::system($system))->write($filename, $content);
-            return self::open($filename, $system, $streamFactory, $bytesPerIteration);
+            $system->getOperator()->write($filename, $content);
+            return self::open($filename, $system, $bytesPerIteration);
         }
     }
     
@@ -122,7 +127,7 @@ class File extends FlysystemData implements StreamInterface
     {
         if ($this->fileHandler == null)
         {
-            $this->fileHandler = $this->system->readStream($this->location);
+            $this->fileHandler = $this->flysystem->getOperator()->readStream($this->location);
         }
 
         return $this->fileHandler;
@@ -133,7 +138,7 @@ class File extends FlysystemData implements StreamInterface
         if ($this->stream == null)
         {
             $handler = $this->getFileHandler();
-            $this->stream = $this->streamFactory->createStreamFromResource($handler);
+            $this->stream =$this->flysystem->getStreamFactory()->createStreamFromResource($handler);
         }
 
         return $this->stream;
@@ -179,7 +184,7 @@ class File extends FlysystemData implements StreamInterface
     {
         if ($this->mimeType == null)
         {
-            return $this->mimeType = $this->system->mimeType($this->location);
+            return $this->mimeType = $this->flysystem->mimeType($this->location);
         }
 
         return $this->mimeType;
@@ -193,7 +198,7 @@ class File extends FlysystemData implements StreamInterface
     {
         if ($this->extension == null)
         {
-            return $this->extension = FileInfo::extension($this->location, $this->system);
+            return $this->extension = $this->flysystem->extension($this->location);
         }
 
         return $this->extension;
@@ -204,7 +209,7 @@ class File extends FlysystemData implements StreamInterface
      */
     final public function delete(): void
     {
-        $this->system->delete($this->location);
+        $this->flysystem->getOperator()->delete($this->location);
     }
 
     /**
@@ -213,7 +218,7 @@ class File extends FlysystemData implements StreamInterface
      */
     final public function getSize(): int
     {
-        return $this->system->fileSize($this->location);
+        return $this->flysystem->getOperator()->fileSize($this->location);
     }
 
     /**
@@ -222,13 +227,13 @@ class File extends FlysystemData implements StreamInterface
      */
     final public function move(string $destination): void
     {
-        if (FileInfo::isDirectory($destination, $this->system))
+        if ($this->flysystem->isDirectory($destination))
         {
             $destination = rtrim($destination, '\/') .
                 static::separator . $this->getName();
         }
 
-        $this->system->move($this->location, $destination);
+        $this->flysystem->getOperator()->move($this->location, $destination);
         $this->location = $destination;
 
         $this->fileHandler = null;
@@ -249,7 +254,7 @@ class File extends FlysystemData implements StreamInterface
             $destination = $this->normalizePath($destination) . static::separator . $this->getName();
         }
 
-        return self::create($destination, $this->getContents(), $this->system, $this->streamFactory);
+        return self::create($destination, $this->getContents(), $this->flysystem, $this->bytesPerIteration);
     }
 
     /**
@@ -272,7 +277,7 @@ class File extends FlysystemData implements StreamInterface
      */
     final public function __toString(): string
     {
-        return $this->system->read($this->location);
+        return $this->flysystem->getOperator()->read($this->location);
     }
 
     /**
@@ -369,7 +374,7 @@ class File extends FlysystemData implements StreamInterface
      */
     final public function getContents(): string
     {
-        return $this->system->read($this->location);
+        return $this->flysystem->getOperator()->read($this->location);
     }
 
     /**
