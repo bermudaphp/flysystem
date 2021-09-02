@@ -3,19 +3,18 @@
 namespace Bermuda\Flysystem;
 
 use Bermuda\Iterator\StreamIterator;
+use Bermuda\String\Str;
 use League\Flysystem\FilesystemOperator;
-use Nyholm\Psr7\Factory\Psr17Factory;
 use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\StreamInterface;
 
-class File implements \Stringable, StreamInterface, \IteratorAggregate
+class File extends FlysystemData implements StreamInterface
 {
     /**
      * @var resource
      */
     private $fileHandler = null;
     private ?StreamInterface $stream = null;
-    private StreamFactoryInterface $streamFactory;
 
     private ?int $filesize = null;
     private ?string $extension = null;
@@ -27,14 +26,12 @@ class File implements \Stringable, StreamInterface, \IteratorAggregate
     /**
      * @throws \League\Flysystem\FilesystemException
      */
-    private function __construct(private string $filename,
-        private FilesystemOperator $system,
+    private function __construct(string $filename, FilesystemOperator $system,
         ?StreamFactoryInterface $streamFactory = null,
         private int $bytesPerIteration = 1024
     )
     {
-        $this->filename = $this->normalizePath($filename);
-        $this->streamFactory = $streamFactory ?? new Psr17Factory();
+        parent::__construct($this->normalizePath($filename), $system, $streamFactory);
     }
 
     /**
@@ -93,11 +90,11 @@ class File implements \Stringable, StreamInterface, \IteratorAggregate
             $extension = FileInfo::extension($content);
             $filename  = Str::filename($extension);
         }
-        
+
         ($system = self::system($system))->write($filename, $content);
         return self::open($filename, $system, $streamFactory, $bytesPerIteration);
     }
-
+    
     /**
      * @return int
      */
@@ -115,11 +112,11 @@ class File implements \Stringable, StreamInterface, \IteratorAggregate
      * @return resource
      * @throws \League\Flysystem\FilesystemException
      */
-    private function getFileHandler()
+    final public function getFileHandler()
     {
         if ($this->fileHandler == null)
         {
-            $this->fileHandler = $this->system->readStream($this->filename);
+            $this->fileHandler = $this->system->readStream($this->location);
         }
 
         return $this->fileHandler;
@@ -151,7 +148,7 @@ class File implements \Stringable, StreamInterface, \IteratorAggregate
 
     private function getSegments(): array
     {
-        return explode('/', $this->filename);
+        return explode(DIRECTORY_SEPARATOR, $this->location);
     }
 
     /**
@@ -192,7 +189,7 @@ class File implements \Stringable, StreamInterface, \IteratorAggregate
         }
 
         $this->move($filename = $this->getPath() . '/' . $name);
-        $this->filename = $filename;
+        $this->location = $filename;
         $this->name = $name;
     }
 
@@ -201,7 +198,7 @@ class File implements \Stringable, StreamInterface, \IteratorAggregate
      */
     public function getFilename(): string
     {
-        return $this->filename;
+        return $this->location;
     }
 
     /**
@@ -212,7 +209,7 @@ class File implements \Stringable, StreamInterface, \IteratorAggregate
     {
         if ($this->mimeType == null)
         {
-            return $this->mimeType = $this->system->mimeType($this->filename);
+            return $this->mimeType = $this->system->mimeType($this->location);
         }
 
         return $this->mimeType;
@@ -226,10 +223,18 @@ class File implements \Stringable, StreamInterface, \IteratorAggregate
     {
         if ($this->extension == null)
         {
-            return $this->extension = FileInfo::extension($this->filename, $this->system);
+            return $this->extension = FileInfo::extension($this->location, $this->system);
         }
 
         return $this->extension;
+    }
+
+    /**
+     * @throws \League\Flysystem\FilesystemException
+     */
+    final public function delete(): void
+    {
+        $this->system->delete($this->location);
     }
 
     /**
@@ -240,7 +245,7 @@ class File implements \Stringable, StreamInterface, \IteratorAggregate
     {
         if ($this->filesize == null)
         {
-            return $this->filesize = $this->system->fileSize($this->filename);
+            return $this->filesize = $this->system->fileSize($this->location);
         }
 
         return $this->filesize;
@@ -254,7 +259,7 @@ class File implements \Stringable, StreamInterface, \IteratorAggregate
     {
         if ($this->lastModified == null)
         {
-            $this->lastModified = $this->system->lastModified($this->filename);
+            $this->lastModified = $this->system->lastModified($this->location);
         }
 
         return $this->lastModified;
@@ -272,8 +277,8 @@ class File implements \Stringable, StreamInterface, \IteratorAggregate
                 '/' . $this->getName();
         }
 
-        $this->system->move($this->filename, $destination);
-        $this->filename = $destination;
+        $this->system->move($this->location, $destination);
+        $this->location = $destination;
 
         $this->fileHandler = null;
         $this->stream = null;
@@ -287,7 +292,7 @@ class File implements \Stringable, StreamInterface, \IteratorAggregate
      */
     final public function copy(string $destination): void
     {
-        $this->system->copy($this->filename, $destination);
+        $this->system->copy($this->location, $destination);
     }
 
     /**
@@ -297,10 +302,11 @@ class File implements \Stringable, StreamInterface, \IteratorAggregate
     public function toArray(): array
     {
         return [
-            'filename' => $this->filename,
+            'filename' => $this->location,
             'extension' => $this->getExtension(),
             'mimeType' => $this->getMimeType(),
-            'size' => $this->getFileSize()
+            'size' => $this->getFileSize(),
+            'modified' => $this->lastModified(),
         ];
     }
 
@@ -309,7 +315,7 @@ class File implements \Stringable, StreamInterface, \IteratorAggregate
      */
     final public function __toString(): string
     {
-        return $this->system->read($this->filename);
+        return $this->system->read($this->location);
     }
 
     /**
@@ -406,7 +412,7 @@ class File implements \Stringable, StreamInterface, \IteratorAggregate
      */
     final public function getContents(): string
     {
-        return $this->system->read($this->filename);
+        return $this->system->read($this->location);
     }
 
     /**
