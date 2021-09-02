@@ -26,6 +26,13 @@ final class FileInfo
         return self::finfoBuffer(FILEINFO_MIME_TYPE, $filenameOrContent, $system);
     }
 
+    /**
+     * @param string $mode
+     * @param string $filenameOrContent
+     * @param FilesystemOperator|null $system
+     * @return string
+     * @throws \League\Flysystem\FilesystemException
+     */
     private static function finfoBuffer(
         string $mode, string
         $filenameOrContent,
@@ -41,20 +48,20 @@ final class FileInfo
      * @return bool
      * @throws \League\Flysystem\FilesystemException
      */
-    public static function isDirectory(string $path, FilesystemOperator $system): bool
+    public static function isDirectory(string $path, ?FilesystemOperator $system = null): bool
     {
-        return strtolower($system->mimeType($path)) == 'directory';
+        return $system === null ? is_dir($path) : strtolower($system->mimeType($path)) == 'directory';
     }
 
     /**
-     * @param string $filename
-     * @param FilesystemOperator $system
-     * @return bool
+     * @param string $filenameOrContent
+     * @param FilesystemOperator|null $system
      * @throws \League\Flysystem\FilesystemException
+     * @return bool
      */
-    public static function isImage(string $filename, FilesystemOperator $system): bool
+    public static function isImage(string $filenameOrContent, ?FilesystemOperator $system = null): bool
     {
-        $mimeType = $system->mimeType($filename);
+        $mimeType = self::mimeType($filenameOrContent, $system);
         return str_contains(strtolower($mimeType), 'image');
     }
 
@@ -64,8 +71,9 @@ final class FileInfo
      * @return bool
      * @throws \League\Flysystem\FilesystemException
      */
-    public static function exists(string $path, FilesystemOperator $system): bool
+    public static function exists(string $path, ?FilesystemOperator $system = null): bool
     {
-        return $system->fileExists($path) || self::isDirectory($path, $system);
+        return $system === null ? file_exists($path) :
+            $system->fileExists($path) || self::isDirectory($path, $system);
     }
 }
