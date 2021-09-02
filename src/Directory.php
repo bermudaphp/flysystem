@@ -123,7 +123,7 @@ final class Directory extends FlysystemData implements \Countable
 
             else
             {
-                $recursive ? $count += $item->count() : $count++;
+                $count += $recursive ? $item->count() : 1;
             }
         }
 
