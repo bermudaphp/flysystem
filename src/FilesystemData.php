@@ -36,6 +36,11 @@ abstract class FlysystemData implements Stringable, Arrayable, \IteratorAggregat
 
         return $this->path;
     }
+    
+    final public function delete(): void
+    {
+        $this->system->delete($this->location);
+    }
 
     protected function getSegments(): array
     {
