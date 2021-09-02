@@ -19,9 +19,6 @@ class File extends FlysystemData implements StreamInterface
     private ?int $filesize = null;
     private ?string $extension = null;
     private ?string $mimeType = null;
-    private ?int $lastModified = null;
-    private ?string $name = null;
-    private ?string $path = null;
 
     /**
      * @throws \League\Flysystem\FilesystemException
@@ -31,7 +28,7 @@ class File extends FlysystemData implements StreamInterface
         private int $bytesPerIteration = 1024
     )
     {
-        parent::__construct($this->normalizePath($filename), $system, $streamFactory);
+        parent::__construct($filename, $system, $streamFactory);
     }
 
     /**
@@ -133,48 +130,12 @@ class File extends FlysystemData implements StreamInterface
         return $this->stream;
     }
 
-    private function normalizePath(string $path): string
-    {
-        return str_replace(['\\'], '/', $path);
-    }
-
     /**
      * @return StreamIterator
      */
     final public function getIterator(int $bytesPerIteration = null): StreamIterator
     {
         return new StreamIterator($this, $bytesPerIteration ?? $this->bytesPerIteration);
-    }
-
-    private function getSegments(): array
-    {
-        return explode(DIRECTORY_SEPARATOR, $this->location);
-    }
-
-    /**
-     * @return string
-     */
-    final public function getName(): string
-    {
-        if ($this->name == null)
-        {
-            $segments = $this->getSegments();
-            return $this->name = array_pop($segments);
-        }
-
-        return $this->name;
-    }
-
-    final public function getPath(): string
-    {
-        if ($this->path == null)
-        {
-            $segments = $this->getSegments();
-            array_pop($segments);
-            return $this->path = implode('/', $segments);
-        }
-
-        return $this->path;
     }
 
     /**
@@ -249,20 +210,6 @@ class File extends FlysystemData implements StreamInterface
         }
 
         return $this->filesize;
-    }
-
-    /**
-     * @return int
-     * @throws \League\Flysystem\FilesystemException
-     */
-    final public function lastModified(): int
-    {
-        if ($this->lastModified == null)
-        {
-            $this->lastModified = $this->system->lastModified($this->location);
-        }
-
-        return $this->lastModified;
     }
 
     /**
