@@ -23,7 +23,7 @@ final class Directory extends FlysystemData implements \Countable
     {
         $system = self::system($system);
 
-        if (FileInfo::isDirectory($location, $system))
+        if (!FileInfo::isDirectory($location, $system))
         {
             throw new \InvalidArgumentException(
                 sprintf('No such directory: %s', $location)
@@ -52,10 +52,17 @@ final class Directory extends FlysystemData implements \Countable
                                   ?StreamFactoryInterface $streamFactory = null,
     ): self
     {
-        ($system = self::system($system))->createDirectory($location);
-        return self::open($location, $system, $streamFactory);
-    }
+        try {
+            return self::open($location, $system, $streamFactory);
+        }
 
+        catch (\InvalidArgumentException $e)
+        {
+            ($system = self::system($system))->createDirectory($location);
+            return self::open($location, $system, $streamFactory);
+        }
+    }
+    
     /**
      * @param self[] $directories
      * @param bool $deleteMerged
@@ -64,9 +71,12 @@ final class Directory extends FlysystemData implements \Countable
     {
         foreach ($directories as $directory)
         {
+            /**
+             * @var File|self $fileOrDirectory
+             */
             foreach ($directory as $fileOrDirectory)
             {
-                $fileOrDirectory->move($this->location);
+                $fileOrDirectory->copy($this->location, true);
             }
 
             if ($deleteMerged)
@@ -74,6 +84,54 @@ final class Directory extends FlysystemData implements \Countable
                 $directory->delete();
             }
         }
+    }
+
+    /**
+     * @param string $destination
+     * @param bool $destinationIsDir
+     * @throws \League\Flysystem\FilesystemException
+     */
+    final public function copy(string $destination): self
+    {
+        $destination = $this->normalizePath($destination);
+
+        $directory = self::create($destination, $this->system, $this->streamFactory);
+
+        foreach ($this as $flysystemData)
+        {
+            if ($directory->getName() !== $flysystemData->getName())
+            {
+                $directory->add($flysystemData);
+            }
+        }
+
+        return $directory;
+    }
+
+    /**
+     * @return int
+     */
+    public function getSize(): int
+    {
+        $size = 0;
+
+        foreach ($this as $item)
+        {
+            $size += $item->getSize();
+        }
+
+        return $size;
+    }
+
+    /**
+     * @param string $path
+     * @return bool
+     * @throws \League\Flysystem\FilesystemException
+     */
+    public function exists(string $path): bool
+    {
+        $path = $this->location . self::separator . $this->normalizePath($path);
+        return FileInfo::exists($path, $this->system);
     }
 
     // public function isRoot(): bool{}
@@ -111,15 +169,7 @@ final class Directory extends FlysystemData implements \Countable
 
         foreach ($this as $item)
         {
-            if ($item instanceof File)
-            {
-                $count++;
-            }
-
-            else
-            {
-                $count += $recursive ? $item->count() : 1;
-            }
+            $count += $recursive ? $item->count() + 1 : 1;
         }
 
         return $count;
@@ -127,19 +177,32 @@ final class Directory extends FlysystemData implements \Countable
 
     public function getIterator(): \Generator
     {
-        foreach ($this->listContents() as $fileOrDirectory)
+        foreach ($this->listContents() as $flysystemData)
         {
-            yield $fileOrDirectory;
+            yield $flysystemData;
         }
     }
 
+    public function delete(): void
+    {
+        $this->system->deleteDirectory($this->location);
+    }
+
     /**
-     * @param File|Directory $fileOrDirectory
+     * @param File|Directory $flysystemData
      * @throws \League\Flysystem\FilesystemException
      */
-    public function add(File|self $fileOrDirectory): void
+    public function add(File|self $flysystemData): void
     {
-        $fileOrDirectory->move($this->location);
+        if ($flysystemData instanceof self)
+        {
+            $flysystemData->copy($this->location . self::separator . $flysystemData->getName());
+        }
+
+        else
+        {
+            $flysystemData->copy($this->location, true);
+        }
     }
 
     /**
@@ -150,7 +213,7 @@ final class Directory extends FlysystemData implements \Countable
      */
     public function addNewFile(string $filename, string $content): File
     {
-        return File::create($content, $this->location . DIRECTORY_SEPARATOR . ltrim( $filename, '\/'), $this->system, $this->streamFactory);
+        return File::create($this->location . self::separator . ltrim( $filename, '\/'), $content, $this->system, $this->streamFactory);
     }
 
     /**
@@ -160,8 +223,8 @@ final class Directory extends FlysystemData implements \Countable
      */
     public function addNewDirectory(string $location): self
     {
-        $location = trim($location, '\/');
-        return self::create($this->location . DIRECTORY_SEPARATOR . $location, $this->system, $this->streamFactory);
+        $location = $this->normalizePath($location);
+        return self::create($this->location . self::separator . $location, $this->system, $this->streamFactory);
     }
 
     /**
@@ -179,15 +242,6 @@ final class Directory extends FlysystemData implements \Countable
     public function getChildes(): array
     {
         return $this->listContents(static fn($v) => $v instanceof self);
-    }
-
-    /**
-     * @return int
-     * @throws \League\Flysystem\FilesystemException
-     */
-    public function lastModified(): int
-    {
-        return $this->system->lastModified($this->location);
     }
 
     /**
@@ -222,11 +276,6 @@ final class Directory extends FlysystemData implements \Countable
         }
 
         return $listing;
-    }
-    
-    public function delete(): void
-    {
-        $this->system->deleteDirectory($this->location);
     }
 
     /**
