@@ -55,11 +55,6 @@ final class Directory extends FlysystemData implements \Countable
         ($system = self::system($system))->createDirectory($location);
         return self::open($location, $system, $streamFactory);
     }
-    
-    public function location(): string
-    {
-        return $this->location;
-    }
 
     /**
      * @param self[] $directories
@@ -138,18 +133,13 @@ final class Directory extends FlysystemData implements \Countable
         }
     }
 
-    public function delete(): void
-    {
-        $this->system->delete($this->location);
-    }
-
     /**
      * @param File|Directory $fileOrDirectory
      * @throws \League\Flysystem\FilesystemException
      */
     public function add(File|self $fileOrDirectory): void
     {
-        $fileOrDirectory->move($this->location . DIRECTORY_SEPARATOR . $fileOrDirectory->getName());
+        $fileOrDirectory->move($this->location);
     }
 
     /**
