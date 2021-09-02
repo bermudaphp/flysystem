@@ -54,20 +54,15 @@ class File implements \Stringable, StreamInterface, \IteratorAggregate
      * @throws \League\Flysystem\FilesystemException
      * @throws \InvalidArgumentException
      */
-    final public static function open(string $filename, ?FilesystemOperator $system = null,
+    public static function open(string $filename, ?FilesystemOperator $system = null,
                                 ?StreamFactoryInterface $streamFactory = null,
                                 int $bytesPerIteration = 1024
     ): self
     {
-        $system !== null ?: $system = FileSystemFactory::makeSystem();
-
-        if (!$system->fileExists($filename))
+        if (!($system = self::system($system))->fileExists($filename))
         {
             throw new \InvalidArgumentException(
-                sprintf(
-                    'Argument [$filename] for %s must be valid path to file',
-                    __METHOD__
-                )
+                sprintf('No such file: %s', $filename)
             );
         }
 
@@ -88,14 +83,18 @@ class File implements \Stringable, StreamInterface, \IteratorAggregate
      * @return static
      * @throws \League\Flysystem\FilesystemException
      */
-    final public static function create(string $content, string $filename, ?FilesystemOperator $system = null,
+    public static function create(string $content, ?string $filename = null, ?FilesystemOperator $system = null,
                                   ?StreamFactoryInterface $streamFactory = null,
                                   int $bytesPerIteration = 1024
     ): self
     {
-        $system !== null ?: $system = FileSystemFactory::makeSystem();
-        $system->write($filename, $content);
-
+        if ($filename === null)
+        {
+            $extension = FileInfo::extension($content);
+            $filename  = Str::filename($extension);
+        }
+        
+        ($system = self::system($system))->write($filename, $content);
         return self::open($filename, $system, $streamFactory, $bytesPerIteration);
     }
 
