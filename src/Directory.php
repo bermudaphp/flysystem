@@ -5,7 +5,6 @@ namespace Bermuda\Flysystem;
 use League\Flysystem\DirectoryAttributes;
 use League\Flysystem\FileAttributes;
 use League\Flysystem\FilesystemOperator;
-use Nyholm\Psr7\Factory\Psr17Factory;
 use Psr\Http\Message\StreamFactoryInterface;
 
 final class Directory extends FlysystemData implements \Countable
@@ -31,7 +30,7 @@ final class Directory extends FlysystemData implements \Countable
             );
         }
 
-        return new self($location, $system, $streamFactory ?? new Psr17Factory());
+        return new self($location, $system, $streamFactory);
     }
 
     /**
@@ -55,6 +54,11 @@ final class Directory extends FlysystemData implements \Countable
     {
         ($system = self::system($system))->createDirectory($location);
         return self::open($location, $system, $streamFactory);
+    }
+    
+    public function location(): string
+    {
+        return $this->location;
     }
 
     /**
@@ -145,7 +149,7 @@ final class Directory extends FlysystemData implements \Countable
      */
     public function add(File|self $fileOrDirectory): void
     {
-        $fileOrDirectory->move($this->location);
+        $fileOrDirectory->move($this->location . DIRECTORY_SEPARATOR . $fileOrDirectory->getName());
     }
 
     /**
