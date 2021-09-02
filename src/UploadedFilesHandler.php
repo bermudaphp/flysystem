@@ -1,6 +1,6 @@
 <?php
 
-namespace Bermuda\Files;
+namespace Bermuda\Flysystem;
 
 use Bermuda\Utils\Header;
 use Bermuda\Utils\ContentType;
