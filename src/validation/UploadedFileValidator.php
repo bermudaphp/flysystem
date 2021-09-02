@@ -1,8 +1,8 @@
 <?php
 
-namespace Bermuda\Files\Validation;
+namespace Bermuda\Flysystem\Validation;
 
-use Bermuda\Files\FileInfo;
+use Bermuda\Flysystem\Flysystem;
 use Psr\Http\Message\UploadedFileInterface;
 
 final class UploadedFileValidator implements UploadedFileValidatorInterface
