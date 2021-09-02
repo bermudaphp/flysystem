@@ -223,6 +223,11 @@ final class Directory extends FlysystemData implements \Countable
 
         return $listing;
     }
+    
+    public function delete(): void
+    {
+        $this->system->deleteDirectory($this->location);
+    }
 
     /**
      * @return array
