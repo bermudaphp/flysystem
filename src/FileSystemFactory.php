@@ -1,6 +1,6 @@
 <?php
 
-namespace Bermuda\Files;
+namespace Bermuda\Flysystem;
 
 use League\Flysystem\Filesystem;
 use League\Flysystem\Local\LocalFilesystemAdapter;
