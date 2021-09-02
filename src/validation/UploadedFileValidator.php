@@ -42,34 +42,42 @@ final class UploadedFileValidator implements UploadedFileValidatorInterface
         $this->extension = is_array($extension) ? $extension : [$extension];
     }
 
-    /**
-     * @param UploadedFileInterface $file
+   /**
+     * @param UploadedFileInterface $uploadedFile
+     * @throws \League\Flysystem\FilesystemException
      */
-    public function validate(UploadedFileInterface $file): void
+    public function validate(UploadedFileInterface $uploadedFile): void
     {
-        $uri = $file->getStream()->getMetadata('uri');
+        $uri = $uploadedFile->getStream()->getMetadata('uri');
+
+        $pathInfo = pathinfo($uri);
+
+        $fileInfo = File::open(
+            $pathInfo['basename'], FileSystemFactory::makeSystem($pathInfo['dirname'])
+        )
+            ->toArray();
 
         $errors = [];
 
-        if ($this->mimeType != [] && !in_array($mimeType = FileInfo::mimeType($uri), $this->mimeType))
+        if ($this->mimeType != [] && !in_array($mimeType = $fileInfo['mimeType'], $this->mimeType))
         {
             $errors[] = sprintf('Invalid mimeType: %s, allowed types: %s; File: %s',
-                $mimeType, implode(',', $this->mimeType), $file->getClientFilename()
+                $mimeType, implode(',', $this->mimeType), $uploadedFile->getClientFilename()
             );
         }
 
-        if ($this->extension != [] && in_array($ext = FileInfo::extension($uri, true), $this->extension))
+        if ($this->extension != [] && in_array($ext = $fileInfo['extension'], $this->extension))
         {
             $errors[] = sprintf('Invalid file extension: %s, allowed extensions: %s; File: %s',
-                $ext, implode(',', $this->extension), $file->getClientFilename()
+                $ext, implode(',', $this->extension), $uploadedFile->getClientFilename()
             );
         }
 
-        if ($this->filesize != null && FileInfo::filesize($uri) > $this->filesize)
+        if ($this->filesize != null && $fileInfo['size'] > $this->filesize)
         {
-            $errors[] = 'Maximum file size exceeded; File: ' . $file->getClientFilename();
+            $errors[] = 'Maximum file size exceeded; File: ' . $uploadedFile->getClientFilename();
         }
 
-        $errors === [] ?: throw new UploadedFileValidationExtension($errors, $file);
+        $errors === [] ?: throw new UploadedFileValidationExtension($errors, $uploadedFile);
     }
 }
