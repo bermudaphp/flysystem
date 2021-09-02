@@ -51,11 +51,9 @@ final class UploadedFileValidator implements UploadedFileValidatorInterface
         $uri = $uploadedFile->getStream()->getMetadata('uri');
 
         $pathInfo = pathinfo($uri);
-
-        $fileInfo = File::open(
-            $pathInfo['basename'], FileSystemFactory::makeSystem($pathInfo['dirname'])
-        )
-            ->toArray();
+        
+        $flysystem = new Flysystem(FileSystemFactory::makeSystem($pathInfo['dirname']);
+        $fileInfo = $flysystem->openFile($pathInfo['basename'])->toArray();                           
 
         $errors = [];
 
