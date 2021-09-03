@@ -97,7 +97,7 @@ final class UploadedFilesHandler implements RequestHandlerInterface, FileProcess
 
         if (count($filesIDs) > 1)
         {
-            $contentType = MimeType::json;
+            $contentType = MimeType::applicationJson;
             $filesIDs = Json::encode($filesIDs);
         }
 
@@ -151,7 +151,7 @@ final class UploadedFilesHandler implements RequestHandlerInterface, FileProcess
     private function handleValidationException(UploadedFileValidationExtension $e): ResponseInterface
     {
         ($r = $this->responseFactory->createResponse(400)
-            ->withHeader(Header::contentType, MimeType::json))
+            ->withHeader(Header::contentType, MimeType::applicationJson))
         ->getBody()
             ->write(json_encode(['errors' => $e->getErrors()]));
 
