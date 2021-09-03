@@ -1,6 +1,6 @@
 <?php
 
-namespace Bermuda\Files\Validation;
+namespace Bermuda\Flysystem\Validation;
 
 use Psr\Http\Message\UploadedFileInterface;
 
