@@ -18,11 +18,6 @@ abstract class FlysystemData implements Stringable, Arrayable, \IteratorAggregat
     {
     }
 
-    protected static function system(?FilesystemOperator $filesystemOperator): FilesystemOperator
-    {
-        return $filesystemOperator ?? FileSystemFactory::makeSystem();
-    }
-
     final public function getPath(): string
     {
         if ($this->path == null)
