@@ -51,6 +51,14 @@ final class Flysystem
     {
         return $this->operator;
     }
+    
+    /**
+     * @return self
+     */
+    public static function fromLocal(): self
+    {
+        return new Flysystem;
+    }
 
     /**
      * @param string $location
