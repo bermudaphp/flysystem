@@ -9,18 +9,19 @@ use Bermuda\Flysystem\Validation\UploadedFileValidationExtension;
 interface FileProcessorInterface
 {
     /**
-     * @param string $path
+     * @param string $location
      * @param UploadedFileInterface $uploadedFile
      * @return string
      * @throws UploadedFileValidationExtension
      * @throws FilesystemException
      */
-    public function processFile(string $path, UploadedFileInterface $uploadedFile): string ;
+    public function processFile(string $location, UploadedFileInterface $uploadedFile): string ;
 
     /**
+     * @param string $location
      * @param string[]|string $filesIDs
      * @return File[]
      * @throws FilesystemException
      */
-    public function moveUploadedFiles(array|string $filesIDs): array ;
+    public function moveUploadedFiles(string $location, array|string $filesIDs): array ;
 }
