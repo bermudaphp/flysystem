@@ -12,7 +12,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UploadedFileInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
-final class UploadedFilesHandler implements RequestHandlerInterface, \App\Services\FileProcessorInterface
+final class UploadedFilesHandler implements RequestHandlerInterface, FileProcessorInterface
 {
     private string $tmpDir = '/uploads/tmp_';
 
