@@ -3,8 +3,8 @@
 namespace Bermuda\Flysystem;
 
 use Bermuda\Utils\Header;
-use Bermuda\Utils\ContentType;
-use League\Flysystem\FilesystemOperator;
+use Bermuda\Utils\MimeType;
+use Bermuda\String\Json;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -12,23 +12,17 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UploadedFileInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
-final class UploadedFilesHandler implements RequestHandlerInterface
+final class UploadedFilesHandler implements RequestHandlerInterface, \App\Services\FileProcessorInterface
 {
-    private FilesystemOperator $system;
-    private ResponseFactoryInterface $responseFactory;
-    private UploadedFileValidatorInterface $validator;
-
-    private static string $tmpDir = '/uploads/tmp_';
-    private static string $storageDir = '/uploads';
+    private string $tmpDir = '/uploads/tmp_';
 
     public function __construct(
-        FilesystemOperator $system,
-        ResponseFactoryInterface $responseFactory,
-        UploadedFileValidatorInterface $validator = null
+        private ResponseFactoryInterface $responseFactory,
+        private ?Flysystem $flysystem = null,
+        private ?UploadedFileValidatorInterface $validator = null
     )
     {
-        $this->system = $system;
-        $this->responseFactory = $responseFactory;
+        $this->flysystem = $flysystem ?? new Flysystem();
         $this->validator = $validator ??
             UploadedFileValidator::instantiate([
                 UploadedFileValidator::mimeType => [
@@ -44,28 +38,14 @@ final class UploadedFilesHandler implements RequestHandlerInterface
      * @param string|null $dir
      * @return string
      */
-    public static function tmpDir(?string $dir = null): string
+    public function tmpDir(?string $dir = null): string
     {
         if ($dir != null)
         {
-            self::$tmpDir = rtrim($dir, '\/');
+            $this->tmpDir = rtrim($dir, '\/');
         }
 
-        return self::$tmpDir;
-    }
-
-    /**
-     * @param string|null $dir
-     * @return string
-     */
-    public static function storageDir(?string $dir = null): string
-    {
-        if ($dir != null)
-        {
-            self::$storageDir = rtrim($dir, '\/');
-        }
-
-        return self::$storageDir;
+        return $this->tmpDir;
     }
 
     /**
@@ -75,8 +55,8 @@ final class UploadedFilesHandler implements RequestHandlerInterface
     public static function fromContainer(ContainerInterface $container): self
     {
         return new self(
-            $container->get(FilesystemOperator::class),
             $container->get(ResponseFactoryInterface::class),
+            $container->get(Flysystem::class),
             $container->has(UploadedFileValidatorInterface::class) ?
                 $container->get(UploadedFileValidatorInterface::class) : null,
         );
@@ -100,13 +80,13 @@ final class UploadedFilesHandler implements RequestHandlerInterface
                 {
                     foreach ($file as $value)
                     {
-                        $filesIDs[] = $this->handleFile(self::$tmpDir, $value);
+                        $filesIDs[] = $this->processFile($this->tmpDir, $value);
                     }
 
                     continue;
                 }
 
-                $filesIDs[] = $this->handleFile(self::$tmpDir, $file);
+                $filesIDs[] = $this->processFile($this->tmpDir, $file);
             }
         }
 
@@ -117,8 +97,8 @@ final class UploadedFilesHandler implements RequestHandlerInterface
 
         if (count($filesIDs) > 1)
         {
-            $contentType = MimeType::applicationJson;
-            $filesIDs = \json_encode($filesIDs);
+            $contentType = MimeType::json;
+            $filesIDs = Json::encode($filesIDs);
         }
 
         ($response = $this->responseFactory->createResponse(201)
@@ -131,40 +111,38 @@ final class UploadedFilesHandler implements RequestHandlerInterface
 
     /**
      * @param string $path
-     * @param UploadedFileInterface $file
+     * @param UploadedFileInterface $uploadedFile
      * @return string
      * @throws \League\Flysystem\FilesystemException
      */
-    private function handleFile(string $path, UploadedFileInterface $file): string
+    public function processFile(string $path, UploadedFileInterface $uploadedFile): string
     {
-        $this->validator->validate($file);
+        $this->validator->validate($uploadedFile);
 
-        $filename = $path . '/' . $file->getClientFilename();
-        $this->system->write($filename, (string) $file->getStream());
+        $filename = $path . '/' . $uploadedFile->getClientFilename();
+        $this->flysystem->write($filename, (string) $uploadedFile->getStream());
 
-        return $file->getClientFilename();
+        return $uploadedFile->getClientFilename();
     }
 
     /**
+     * @param string $location
      * @param string[]|string $filesIDs
      * @return File[]
      * @throws \League\Flysystem\FilesystemException
      */
-    public function moveUploadedFiles(array|string $filesIDs): array
+    public function moveUploadedFiles(string $location, array|string $filesIDs): array
     {
         $files = [];
 
         is_array($filesIDs) ?: $filesIDs = [$filesIDs];
-        
-        if (!$this->system->fileExists(self::$storageDir))
-        {
-            $this->system->createDirectory(self::$storageDir);
-        }
+
+        $this->flysystem->exists($location) ?: $this->flysystem->createDirectory($location);
 
         foreach ($filesIDs as $fileID)
         {
-            ($files[] = File::open(self::$tmpDir . '/' . $fileID, $this->system))
-                ->move(self::$storageDir);
+            ($files[] =$this->flysystem->openFile($this->tmpDir . '/' . $fileID))
+                ->move($location);
         }
 
         return $files;
@@ -173,12 +151,10 @@ final class UploadedFilesHandler implements RequestHandlerInterface
     private function handleValidationException(UploadedFileValidationExtension $e): ResponseInterface
     {
         ($r = $this->responseFactory->createResponse(400)
-            ->withHeader(Header::contentType, MimeType::applicationJson))
-                ->getBody()
-                    ->write(\json_encode([
-                        'errors' => $e->getErrors()
-                    ]));
-        
+            ->withHeader('Content-Type', 'application/json'))
+        ->getBody()
+            ->write(json_encode(['errors' => $e->getErrors()]));
+
         return $r;
     }
 }
