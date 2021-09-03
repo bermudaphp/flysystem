@@ -88,7 +88,7 @@ class File extends FlysystemData implements StreamInterface
 
         if ($filename === null)
         {
-            $extension = $system->extension($content);
+            $extension = $system->extension($content, true);
             $filename  = Str::filename($extension);
 
             $system->getOperator()->write($filename, $content);
