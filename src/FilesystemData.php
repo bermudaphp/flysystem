@@ -5,8 +5,6 @@ namespace Bermuda\Flysystem;
 use Bermuda\Arrayable;
 use Bermuda\String\Stringable;
 use League\Flysystem\FilesystemOperator;
-use Nyholm\Psr7\Factory\Psr17Factory;
-use Psr\Http\Message\StreamFactoryInterface;
 
 abstract class FlysystemData implements Stringable, Arrayable, \IteratorAggregate
 {
@@ -16,10 +14,8 @@ abstract class FlysystemData implements Stringable, Arrayable, \IteratorAggregat
 
     protected const separator = '/';
 
-    protected function __construct(protected string $location, protected FilesystemOperator $system,
-                                protected ?StreamFactoryInterface $streamFactory = null)
+    protected function __construct(protected string $location, protected Flysystem $flysystem)
     {
-        $this->streamFactory = $this->streamFactory ?? new Psr17Factory();
     }
 
     protected static function system(?FilesystemOperator $filesystemOperator): FilesystemOperator
@@ -57,7 +53,7 @@ abstract class FlysystemData implements Stringable, Arrayable, \IteratorAggregat
      */
     final public function lastModified(): int
     {
-        return $this->system->lastModified($this->location);
+        return $this->flysystem->lastModified($this->location);
     }
 
     /**
@@ -81,11 +77,11 @@ abstract class FlysystemData implements Stringable, Arrayable, \IteratorAggregat
      */
     final public function visibility(string $visibility = null)
     {
-        $value = $this->system->visibility($this->location);
+        $value = $this->flysystem->visibility($this->location);
 
         if ($visibility !== null)
         {
-            $this->system->setVisibility($this->location, $visibility);
+            $this->flysystem->setVisibility($this->location, $visibility);
         }
 
         return $value;
