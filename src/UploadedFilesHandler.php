@@ -115,11 +115,11 @@ final class UploadedFilesHandler implements RequestHandlerInterface, \App\Servic
      * @return string
      * @throws \League\Flysystem\FilesystemException
      */
-    public function processFile(string $path, UploadedFileInterface $uploadedFile): string
+    public function processFile(string $location, UploadedFileInterface $uploadedFile): string
     {
         $this->validator->validate($uploadedFile);
 
-        $filename = $path . '/' . $uploadedFile->getClientFilename();
+        $filename = $location . '/' . $uploadedFile->getClientFilename();
         $this->flysystem->write($filename, (string) $uploadedFile->getStream());
 
         return $uploadedFile->getClientFilename();
