@@ -151,7 +151,7 @@ final class UploadedFilesHandler implements RequestHandlerInterface, \App\Servic
     private function handleValidationException(UploadedFileValidationExtension $e): ResponseInterface
     {
         ($r = $this->responseFactory->createResponse(400)
-            ->withHeader('Content-Type', 'application/json'))
+            ->withHeader(Header::contentType, MimeType::json))
         ->getBody()
             ->write(json_encode(['errors' => $e->getErrors()]));
 
