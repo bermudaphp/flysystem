@@ -2,6 +2,7 @@
 
 namespace Bermuda\Flysystem\Validation;
 
+use Bermuda\Flysystem\FileSystemFactory;
 use Bermuda\Flysystem\Flysystem;
 use Psr\Http\Message\UploadedFileInterface;
 
