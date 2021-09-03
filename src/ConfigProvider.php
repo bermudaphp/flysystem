@@ -10,7 +10,7 @@ final class ConfigProvider extends \Bermuda\Config\ConfigProvider
     protected function getFactories(): array
     {
         return [
-            Flysystem::class => 'Bermuda\Flysyste\Flysystem::makeLocal',
+            Flysystem::class => 'Bermuda\Flysystem\Flysystem::makeLocal',
             FileProcessorInterface::class => 'Bermuda\Flysystem\UploadedFilesHandler::fromContainer'
         ];
     }
