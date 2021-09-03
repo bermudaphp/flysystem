@@ -2,6 +2,7 @@
 
 namespace Bermuda\Flysystem;
 
+use Bermuda\Flysystem\Validation\UploadedFileValidationExtension;
 use Bermuda\Utils\Header;
 use Bermuda\Utils\MimeType;
 use Bermuda\String\Json;
@@ -11,6 +12,8 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UploadedFileInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Bermuda\Flysystem\Validation\UploadedFileValidator;
+use Bermuda\Flysystem\Validation\UploadedFileValidatorInterface;
 
 final class UploadedFilesHandler implements RequestHandlerInterface, FileProcessorInterface
 {
