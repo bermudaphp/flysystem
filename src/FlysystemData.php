@@ -79,7 +79,7 @@ abstract class FlysystemData implements Stringable, Arrayable, \IteratorAggregat
      * @return string
      * @throws \League\Flysystem\FilesystemException
      */
-    final public function visibility(string $visibility = null)
+    final public function visibility(string $visibility = null): string
     {
         $value = $this->flysystem->visibility($this->location);
 
