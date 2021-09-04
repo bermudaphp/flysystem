@@ -2,6 +2,7 @@
 
 namespace Bermuda\Flysystem;
 
+use Carbon\Carbon;
 use Bermuda\Arrayable;
 use Bermuda\String\Stringable;
 use League\Flysystem\FilesystemOperator;
@@ -46,9 +47,16 @@ abstract class FlysystemData implements Stringable, Arrayable, \IteratorAggregat
      * @return int
      * @throws \League\Flysystem\FilesystemException
      */
-    final public function lastModified(): int
+    final public function lastModified(bool $asCarbon = true): int|Carbon
     {
-        return $this->flysystem->lastModified($this->location);
+        $timestamp = $this->flysystem->lastModified($this->location);
+
+        if ($asCarbon)
+        {
+            return Carbon::createFromTimestamp($timestamp);
+        }
+
+        return $timestamp;
     }
 
     /**
