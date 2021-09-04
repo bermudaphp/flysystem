@@ -198,12 +198,7 @@ final class Flysystem
      */
     public function isImage(string $filenameOrContent, bool $isContent = false): bool
     {
-        try {
-            $mimeType = $this->mimeType($filenameOrContent, $isContent);
-            return str_contains(strtolower($mimeType), 'image');
-        } catch (FilesystemException $e) {
-            return false;
-        }
+        return $this->mimeTypeComparison($type, 'image', true);
     }
 
     /**
@@ -213,7 +208,7 @@ final class Flysystem
      */
     public function is(string $content, string $type): bool
     {
-        return $this->mimeTypeComparison($type, $content . true);
+        return $this->mimeTypeComparison($type, $content, true);
     }
 
     /**
