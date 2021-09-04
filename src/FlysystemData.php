@@ -49,7 +49,8 @@ abstract class FlysystemData implements Stringable, Arrayable, \IteratorAggregat
      */
     final public function lastModified(bool $asCarbon = true): int|Carbon
     {
-        $timestamp = $this->flysystem->lastModified($this->location);
+        $timestamp = $this->flysystem->getOperator()
+            ->lastModified($this->location);
 
         if ($asCarbon)
         {
