@@ -4,6 +4,7 @@ namespace Bermuda\Flysystem;
 
 use Bermuda\String\Str;
 use Bermuda\String\Stringy;
+use Carbon\CarbonInterface;
 use League\Flysystem\FilesystemOperator;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Psr\Http\Message\StreamFactoryInterface;
@@ -50,6 +51,36 @@ final class Flysystem
     public function getOperator(): FilesystemOperator
     {
         return $this->operator;
+    }
+
+    /**
+     * @param string $location
+     * @param bool $asCarbon
+     * @return int|CarbonInterface
+     */
+    public function lastModified(string $location, bool $asCarbon = true): int|CarbonInterface
+    {
+        return $this->open($location)->lastModified($asCarbon);
+    }
+
+    /**
+     * @param string $location
+     * @return File[]
+     * @throws \League\Flysystem\FilesystemException
+     */
+    public function getFiles(string $location): array
+    {
+        return $this->openDirectory($location)->getFiles();
+    }
+
+    /**
+     * @param string $location
+     * @return array
+     * @throws \League\Flysystem\FilesystemException
+     */
+    public function getDirectories(string $location): array
+    {
+        return $this->openDirectory($location)->getChildes();
     }
     
     /**
@@ -126,13 +157,13 @@ final class Flysystem
     }
 
     /**
-     * @param string $path
+     * @param string $location
      * @return bool
      */
-    public function isDirectory(string $path): bool
+    public function isDirectory(string $location): bool
     {
         try {
-            return strtolower($this->operator->mimeType($path)) === 'directory';
+            return strtolower($this->operator->mimeType($location)) === 'directory';
         }
         catch (\League\Flysystem\FilesystemException $e)
         {
