@@ -2,9 +2,13 @@
 
 namespace Bermuda\Flysystem;
 
+use finfo;
+use BadMethodCallException;
 use Bermuda\String\Str;
 use Bermuda\String\Stringy;
 use Carbon\CarbonInterface;
+use InvalidArgumentException;
+use League\Flysystem\FilesystemException;
 use League\Flysystem\FilesystemOperator;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Psr\Http\Message\StreamFactoryInterface;
@@ -15,7 +19,7 @@ use Psr\Http\Message\StreamFactoryInterface;
  */
 final class Flysystem
 {
-    public function __construct(private ?FilesystemOperator $operator = null,
+    public function __construct(private ?FilesystemOperator     $operator = null,
                                 private ?StreamFactoryInterface $streamFactory = null
     )
     {
@@ -23,26 +27,71 @@ final class Flysystem
         $this->streamFactory = $this->streamFactory ?? new Psr17Factory();
     }
 
+    /**
+     * @return self
+     */
+    public static function fromLocal(): self
+    {
+        return new Flysystem;
+    }
+
     public function __call(string $name, array $arguments)
     {
-        if (($stringy = new Stringy($name))->start(2)->equals('is'))
-        {
+        if (($stringy = new Stringy($name))->start(2)->equals('is')) {
             return $this->isFile($arguments[0], $stringy->slice(2));
         }
 
-        if (method_exists($this->operator, $name))
-        {
+        if (method_exists($this->operator, $name)) {
             return call_user_func_array([$this->operator, $name], $arguments);
         }
 
-        if (method_exists($this->streamFactory, $name))
-        {
+        if (method_exists($this->streamFactory, $name)) {
             return call_user_func_array([$this->operator, $name], $arguments);
         }
 
-        throw new \BadMethodCallException(
+        throw new BadMethodCallException(
             sprintf('Method %s doesnt exists from %s', $name, __CLASS__)
         );
+    }
+
+    /**
+     * @param string $path
+     * @return bool
+     * @throws FilesystemException
+     */
+    public function isFile(string $path, ?string $type = null): bool
+    {
+        if ($type === null) {
+            return $this->operator->fileExists($path);
+        }
+
+        return $this->operator->fileExists($path) && $this->mimeTypeComparison($type, $path);
+    }
+
+    private function mimeTypeComparison(string $type, string $contentOrFile, bool $isContent = false): bool
+    {
+        return Str::contains($this->mimeType($contentOrFile, $isContent), $type);
+    }
+
+    /**
+     * @param string $filenameOrContent
+     * @param bool $isContent
+     * @return string
+     */
+    public function mimeType(string $filenameOrContent, bool $isContent = false): string
+    {
+        return $this->finfoBuffer(FILEINFO_MIME_TYPE, $filenameOrContent, $isContent);
+    }
+
+    /**
+     * @param string $mode
+     * @param string $filenameOrContent
+     * @return string
+     */
+    private function finfoBuffer(string $mode, string $filenameOrContent, bool $isContent = false): string
+    {
+        $content = $isContent ? $filenameOrContent : $this->operator->read($filenameOrContent);
+        return (new finfo($mode))->buffer($content);
     }
 
     /**
@@ -65,8 +114,49 @@ final class Flysystem
 
     /**
      * @param string $location
+     * @return File|Directory|null
+     * @throws FilesystemException
+     */
+    public function open(string $location): File|Directory|null
+    {
+        try {
+            $this->openFile($location);
+        } catch (InvalidArgumentException $thr) {
+            try {
+                return $this->openDirectory($location);
+            } catch (InvalidArgumentException $e) {
+                return null;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param string|null $filename
+     * @param string $content
+     * @return File
+     * @throws FilesystemException
+     */
+    public function openFile(?string $filename = null): File
+    {
+        return File::open($filename, $this);
+    }
+
+    /**
+     * @param string $location
+     * @return Directory
+     * @throws FilesystemException
+     */
+    public function openDirectory(string $location): Directory
+    {
+        return Directory::open($location, $this);
+    }
+
+    /**
+     * @param string $location
      * @return File[]
-     * @throws \League\Flysystem\FilesystemException
+     * @throws FilesystemException
      */
     public function getFiles(string $location): array
     {
@@ -76,45 +166,11 @@ final class Flysystem
     /**
      * @param string $location
      * @return array
-     * @throws \League\Flysystem\FilesystemException
+     * @throws FilesystemException
      */
     public function getDirectories(string $location): array
     {
         return $this->openDirectory($location)->getChildes();
-    }
-    
-    /**
-     * @return self
-     */
-    public static function fromLocal(): self
-    {
-        return new Flysystem;
-    }
-
-    /**
-     * @param string $location
-     * @return File|Directory|null
-     * @throws \League\Flysystem\FilesystemException
-     */
-    public function open(string $location): File|Directory|null
-    {
-        try {
-            $this->openFile($location);
-        }
-
-        catch (\InvalidArgumentException $thr)
-        {
-            try {
-                return $this->openDirectory($location);
-            }
-
-            catch (\InvalidArgumentException $e)
-            {
-                return null;
-            }
-        }
-
-        return null;
     }
 
     /**
@@ -138,42 +194,6 @@ final class Flysystem
     /**
      * @param string $filenameOrContent
      * @param bool $isContent
-     * @return string
-     */
-    public function mimeType(string $filenameOrContent, bool $isContent = false): string
-    {
-        return $this->finfoBuffer(FILEINFO_MIME_TYPE, $filenameOrContent, $isContent);
-    }
-
-    /**
-     * @param string $mode
-     * @param string $filenameOrContent
-     * @return string
-     */
-    private function finfoBuffer(string $mode, string $filenameOrContent, bool $isContent = false): string
-    {
-        $content = $isContent ? $filenameOrContent : $this->operator->read($filenameOrContent);
-        return (new \finfo($mode))->buffer($content);
-    }
-
-    /**
-     * @param string $location
-     * @return bool
-     */
-    public function isDirectory(string $location): bool
-    {
-        try {
-            return strtolower($this->operator->mimeType($location)) === 'directory';
-        }
-        catch (\League\Flysystem\FilesystemException $e)
-        {
-            return false;
-        }
-    }
-
-    /**
-     * @param string $filenameOrContent
-     * @param bool $isContent
      * @return bool
      */
     public function isImage(string $filenameOrContent, bool $isContent = false): bool
@@ -181,9 +201,7 @@ final class Flysystem
         try {
             $mimeType = $this->mimeType($filenameOrContent, $isContent);
             return str_contains(strtolower($mimeType), 'image');
-        }
-        catch (\League\Flysystem\FilesystemException $e)
-        {
+        } catch (FilesystemException $e) {
             return false;
         }
     }
@@ -195,14 +213,14 @@ final class Flysystem
      */
     public function is(string $content, string $type): bool
     {
-        return $this->mimeTypeComparison($type, $content. true);
+        return $this->mimeTypeComparison($type, $content . true);
     }
 
     /**
      * @param string|null $filename
      * @param string $content
      * @return File
-     * @throws \League\Flysystem\FilesystemException
+     * @throws FilesystemException
      */
     public function createFile(?string $filename = null, string $content = ''): File
     {
@@ -212,7 +230,7 @@ final class Flysystem
     /**
      * @param string $location
      * @return Directory
-     * @throws \League\Flysystem\FilesystemException
+     * @throws FilesystemException
      */
     public function createDirectory(string $location): Directory
     {
@@ -220,44 +238,19 @@ final class Flysystem
     }
 
     /**
-     * @param string|null $filename
-     * @param string $content
-     * @return File
-     * @throws \League\Flysystem\FilesystemException
-     */
-    public function openFile(?string $filename = null): File
-    {
-        return File::open($filename, $this);
-    }
-
-    /**
      * @param string $location
-     * @return Directory
-     * @throws \League\Flysystem\FilesystemException
-     */
-    public function openDirectory(string $location): Directory
-    {
-        return Directory::open($location, $this);
-    }
-
-    /**
-     * @param string $path
      * @param callable|null $filter
      * @return array
-     * @throws \League\Flysystem\FilesystemException
+     * @throws FilesystemException
      */
-    public function listContents(string $path = '/', callable $filter = null): array
+    public function listContents(string $location = '/', callable $filter = null): array
     {
         $list = [];
 
-        foreach ($this->operator->listContents($path) as $attr)
-        {
-            $flysystemData = $attr->isFile() ?
-                File::open($attr->path(), $this)
-                : Directory::open($attr->path(), $this);
+        foreach ($this->operator->listContents($location) as $listContent) {
+            $flysystemData = $this->open($listContent->path());
 
-            if ($filter === null || $filter($flysystemData))
-            {
+            if ($filter === null || $filter($flysystemData)) {
                 $list[] = $flysystemData;
             }
         }
@@ -268,22 +261,7 @@ final class Flysystem
     /**
      * @param string $path
      * @return bool
-     * @throws \League\Flysystem\FilesystemException
-     */
-    public function isFile(string $path, ?string $type = null): bool
-    {
-        if ($type === null)
-        {
-            return $this->operator->fileExists($path);
-        }
-
-        return $this->operator->fileExists($path) && $this->mimeTypeComparison($type, $path);
-    }
-
-    /**
-     * @param string $path
-     * @return bool
-     * @throws \League\Flysystem\FilesystemException
+     * @throws FilesystemException
      */
     public function exists(string $path): bool
     {
@@ -291,8 +269,16 @@ final class Flysystem
             || $this->isDirectory($path);
     }
 
-    private function mimeTypeComparison(string $type, string $contentOrFile, bool $isContent = false): bool
+    /**
+     * @param string $location
+     * @return bool
+     */
+    public function isDirectory(string $location): bool
     {
-        return Str::contains($this->mimeType($contentOrFile, $isContent), $type);
+        try {
+            return strtolower($this->operator->mimeType($location)) === 'directory';
+        } catch (FilesystemException $e) {
+            return false;
+        }
     }
 }
