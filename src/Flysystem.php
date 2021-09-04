@@ -46,7 +46,7 @@ final class Flysystem
         }
 
         if (method_exists($this->streamFactory, $name)) {
-            return call_user_func_array([$this->operator, $name], $arguments);
+            return call_user_func_array([$this->streamFactory, $name], $arguments);
         }
 
         throw new BadMethodCallException(
@@ -105,7 +105,7 @@ final class Flysystem
     /**
      * @param string $location
      * @param bool $asCarbon
-     * @return int|CarbonInterface
+     * @return int|Carbon
      */
     public function lastModified(string $location, bool $asCarbon = true): int|CarbonInterface
     {
