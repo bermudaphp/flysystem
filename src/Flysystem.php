@@ -55,17 +55,17 @@ final class Flysystem
     }
 
     /**
-     * @param string $path
+     * @param string $location
      * @return bool
      * @throws FilesystemException
      */
-    public function isFile(string $path, ?string $type = null): bool
+    public function isFile(string $location, ?string $type = null): bool
     {
         if ($type === null) {
-            return $this->operator->fileExists($path);
+            return $this->operator->fileExists($location);
         }
 
-        return $this->operator->fileExists($path) && $this->mimeTypeComparison($type, $path);
+        return $this->operator->fileExists($location) && $this->mimeTypeComparison($type, $location);
     }
 
     private function mimeTypeComparison(string $type, string $contentOrFile, bool $isContent = false): bool
@@ -198,7 +198,7 @@ final class Flysystem
      */
     public function isImage(string $filenameOrContent, bool $isContent = false): bool
     {
-        return $this->mimeTypeComparison($type, 'image', true);
+        return $this->mimeTypeComparison('image', $filenameOrContent, true);
     }
 
     /**
