@@ -2,7 +2,7 @@
 
 namespace Bermuda\Flysystem\Exceptions;
 
-final class NoSuchFileException extends \RuntimeException
+final class NoSuchFile extends \RuntimeException
 {
     public function __construct(string $filename)
     {
