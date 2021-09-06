@@ -73,7 +73,7 @@ abstract class FlysystemData implements Stringable, Arrayable, \IteratorAggregat
     
     protected function normalizePath(string $path): string
     {
-        return rtrim(str_replace(['\/'], static::separator, $path), static::separator);
+        return rtrim(str_replace(['/', '\\'], static::separator, $path), static::separator);
     }
 
     /**
