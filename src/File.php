@@ -2,6 +2,7 @@
 
 namespace Bermuda\Flysystem;
 
+use Bermuda\HTTP\Response;
 use Bermuda\String\Str;
 use Bermuda\Iterator\StreamIterator;
 use Bermuda\Utils\Header;
@@ -144,16 +145,19 @@ class File extends FlysystemData implements StreamInterface
      * @return ResponseInterface
      * @throws \League\Flysystem\FilesystemException
      */
-    public function responde(ResponseInterface $response): ResponseInterface
+    public function responde(ResponseInterface $response, bool $inline = false): ResponseInterface
     {
-        $response->withHeader(Header::contentDescription, 'File-transfer')
+        $desposition = $inline ? ContentDisposition::inline
+            : ContentDisposition::attachment($this->getName());
+
+        ($response = $response->withHeader(Header::contentDescription, 'File-transfer')
             ->withHeader(Header::contentType, $this->getMimeType())
-            ->withHeader(Header::contentDisposition, ContentDisposition::attachment($this->getName()))
+            ->withHeader(Header::contentDisposition, $desposition)
             ->withHeader(Header::contentLength, $this->getSize())
             ->withHeader(Header::contentTransferEncoding, 'binary')
             ->withHeader(Header::expires, 0)
             ->withHeader(Header::cacheControl, 'must-revalidate')
-            ->withHeader(Header::pragma, 'public')
+            ->withHeader(Header::pragma, 'public'))
             ->getBody()->write($this->getContents());
 
         return $response;
