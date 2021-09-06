@@ -18,12 +18,7 @@ final class Directory extends FlysystemData implements \Countable
         string $location, ?Flysystem $system = null
     ): self
     {
-        if ($system === null)
-        {
-            $system = new Flysystem();
-        }
-
-        if (!$system->isDirectory($location))
+        if (!($system = self::system($system))->isDirectory($location))
         {
             throw new \InvalidArgumentException(
                 sprintf('No such directory: %s', $location)
@@ -53,16 +48,10 @@ final class Directory extends FlysystemData implements \Countable
     {
         try {
             return self::open($location, $system);
-        }
-
-        catch (\InvalidArgumentException $e)
-        {
-            if ($system === null)
-            {
-                $system = new Flysystem();
-            }
-
-            $system->getOperator()->createDirectory($location);
+        } catch (\InvalidArgumentException $e) {
+            ($system = self::system($system))->getOperator()
+                ->createDirectory($location);
+            
             return self::open($location, $system);
         }
     }
