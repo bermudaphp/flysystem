@@ -101,6 +101,22 @@ final class Flysystem
     {
         return $this->operator;
     }
+    
+    /**
+     * @return float|null
+     */
+    public function diskTotalSpace():? float
+    {
+        return ($space = @disk_total_space(getcwd())) !== false ? $space : null;
+    }
+
+    /**
+     * @return float|null
+     */
+    public function diskFreeSpace():? float
+    {
+        return ($space = @disk_free_space(getcwd())) !== false ? $space : null;
+    }
 
     /**
      * @param string $location
