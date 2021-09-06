@@ -154,7 +154,7 @@ class File extends FlysystemData implements StreamInterface
             ->withHeader(Header::expires, 0)
             ->withHeader(Header::cacheControl, 'must-revalidate')
             ->withHeader(Header::pragma, 'public')
-            ->getBody()->write($this);
+            ->getBody()->write($this->getContents());
 
         return $response;
     }
