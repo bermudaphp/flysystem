@@ -10,7 +10,6 @@ use League\Flysystem\FilesystemOperator;
 abstract class FlysystemData implements Stringable, Arrayable, \IteratorAggregate
 {
     protected ?string $name = null;
-    protected ?int $lastModified = null;
     protected ?string $path = null;
 
     protected const separator = DIRECTORY_SEPARATOR;
