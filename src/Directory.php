@@ -13,6 +13,7 @@ final class Directory extends FlysystemData implements \Countable
      * @param StreamFactoryInterface|null $streamFactory
      * @return static
      * @throws \League\Flysystem\FilesystemException
+     * @throws Exceptions\NoSuchDirectoryException
      */
     public static function open(
         string $location, ?Flysystem $system = null
@@ -20,9 +21,7 @@ final class Directory extends FlysystemData implements \Countable
     {
         if (!($system = self::system($system))->isDirectory($location))
         {
-            throw new \InvalidArgumentException(
-                sprintf('No such directory: %s', $location)
-            );
+           throw new Exceptions\NoSuchDirectoryException($location);
         }
 
         return new self($location, $system);
@@ -48,7 +47,7 @@ final class Directory extends FlysystemData implements \Countable
     {
         try {
             return self::open($location, $system);
-        } catch (\InvalidArgumentException $e) {
+        } catch (NoSuchDirectoryException $e) {
             ($system = self::system($system))->getOperator()
                 ->createDirectory($location);
             
