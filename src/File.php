@@ -47,7 +47,7 @@ class File extends FlysystemData implements StreamInterface
      * @param int $bytesPerIteration
      * @return static
      * @throws \League\Flysystem\FilesystemException
-     * @throws Exceptions\NoSuchFileException;
+     * @throws Exceptions\NoSuchFile;
      */
     public static function open(
         string $filename, ?Flysystem $system = null,
@@ -56,7 +56,7 @@ class File extends FlysystemData implements StreamInterface
     {
         if (!($system = self::system($system))->isFile($filename))
         {
-            throw new NoSuchFileException($filename);
+            throw new Exceptions\NoSuchFile($filename);
         }
 
         if ($system->isImage($filename))
@@ -94,7 +94,7 @@ class File extends FlysystemData implements StreamInterface
             return self::open($filename, $system, $bytesPerIteration);
         }
 
-        catch (Exceptions\NoSuchFileException $e)
+        catch (Exceptions\NoSuchFile $e)
         {
             $system->getOperator()->write($filename, $content);
             return self::open($filename, $system, $bytesPerIteration);
