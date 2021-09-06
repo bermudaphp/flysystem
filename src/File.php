@@ -2,7 +2,6 @@
 
 namespace Bermuda\Flysystem;
 
-use Bermuda\HTTP\Response;
 use Bermuda\String\Str;
 use Bermuda\Iterator\StreamIterator;
 use Bermuda\Utils\Header;
