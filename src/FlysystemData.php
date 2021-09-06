@@ -13,34 +13,67 @@ abstract class FlysystemData implements Stringable, Arrayable, \IteratorAggregat
     protected ?int $lastModified = null;
     protected ?string $path = null;
 
-    protected const separator = '/';
+    protected const separator = DIRECTORY_SEPARATOR;
 
     protected function __construct(protected string $location, protected Flysystem $flysystem)
     {
+        $this->location = $this->normalizePath($location);
+    }
+    
+    protected static function system(?Flysystem $system = null): Flysystem
+    {
+        return $system ?? new Flysystem;
     }
 
     final public function getPath(): string
     {
-        if ($this->path == null)
-        {
-            $segments = $this->getSegments();
-            array_pop($segments);
-            return $this->path = implode(static::separator, $segments);
-        }
-
-        return $this->path;
+        return $this->path === null ? 
+            $this->path = implode(self::separator, $this->getSegments(true)) 
+            : $this->path;
     }
 
     abstract public function getSize(): int ;
+    
+    /**
+     * @param string $filename
+     * @param Flysystem|null $system
+     * @param int $bytesPerIteration
+     * @return static
+     * @throws \League\Flysystem\FilesystemException
+     */
+    abstract public static function open(
+        string $filename, ?Flysystem $system = null,
+        int $bytesPerIteration = 1024
+    ): self ;
+    
+    /**
+     * @param string|null $filename
+     * @param string $content
+     * @param Flysystem|null $system
+     * @param int $bytesPerIteration
+     * @return static
+     * @throws \League\Flysystem\FilesystemException
+     */
+    abstract public static function create(?string $filename = null, string $content = '', Flysystem $system = null,
+                                  int $bytesPerIteration = 1024
+    ): self ;
 
-    protected function getSegments(): array
+    protected function getLastSegment(): string
     {
-        return explode(static::separator, str_replace(['\\'], static::separator, $this->location));
+        $segments = $this->getSegments();
+        return array_pop($segments);
     }
-
+    
+    protected function getSegments(bool $withoodLastSegment = false): array
+    {
+        $segments = explode(static::separator, $this->location);
+        !$withoodLastSegment ?: array_pop($segments);   
+        return $segments;
+    }
+    
     protected function normalizePath(string $path): string
     {
-        return rtrim(str_replace(['\\'], static::separator, $path), '\\');
+        return rtrim(str_replace(['\/'], static::separator, $path), static::separator);
     }
 
     /**
@@ -51,13 +84,7 @@ abstract class FlysystemData implements Stringable, Arrayable, \IteratorAggregat
     {
         $timestamp = $this->flysystem->getOperator()
             ->lastModified($this->location);
-
-        if ($asCarbon)
-        {
-            return Carbon::createFromTimestamp($timestamp);
-        }
-
-        return $timestamp;
+        return $asCarbon ? Carbon::createFromTimestamp($timestamp) : $timestamp;
     }
 
     /**
@@ -65,13 +92,7 @@ abstract class FlysystemData implements Stringable, Arrayable, \IteratorAggregat
      */
     final public function getName(): string
     {
-        if ($this->name == null)
-        {
-            $segments = $this->getSegments();
-            return $this->name = array_pop($segments);
-        }
-
-        return $this->name;
+        return $this->name === null ? $this->name = $this->getLastSegment() : $this->name;
     }
 
     /**
