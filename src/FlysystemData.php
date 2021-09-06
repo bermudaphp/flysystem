@@ -41,10 +41,7 @@ abstract class FlysystemData implements Stringable, Arrayable, \IteratorAggregat
      * @throws \League\Flysystem\FilesystemException
      * @throws Exceptions\NoSuchFile|Exceptions\NoSuchDirectory
      */
-    abstract public static function open(
-        string $filename, ?Flysystem $system = null,
-        int $bytesPerIteration = 1024
-    ): self ;
+    abstract public static function open(string $filename, ?Flysystem $system = null): self ;
     
     /**
      * @param string|null $filename
@@ -54,8 +51,9 @@ abstract class FlysystemData implements Stringable, Arrayable, \IteratorAggregat
      * @return static
      * @throws \League\Flysystem\FilesystemException
      */
-    abstract public static function create(?string $filename = null, string $content = '', Flysystem $system = null,
-                                  int $bytesPerIteration = 1024
+    abstract public static function create(
+        ?string $filename = null, string $content = '',
+        Flysystem $system = null
     ): self ;
 
     protected function getLastSegment(): string
