@@ -39,7 +39,7 @@ abstract class FlysystemData implements Stringable, Arrayable, \IteratorAggregat
      * @param int $bytesPerIteration
      * @return static
      * @throws \League\Flysystem\FilesystemException
-     * @throws Exceptions\NoSuchFileException|Exceptions\NoSuchDirectoryException
+     * @throws Exceptions\NoSuchFile|Exceptions\NoSuchDirectory
      */
     abstract public static function open(
         string $filename, ?Flysystem $system = null,
