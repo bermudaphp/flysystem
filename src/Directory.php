@@ -21,7 +21,7 @@ final class Directory extends FlysystemData implements \Countable
     {
         if (!($system = self::system($system))->isDirectory($location))
         {
-           throw new Exceptions\NoSuchDirectoryException($location);
+           throw new Exceptions\NoSuchDirectory($location);
         }
 
         return new self($location, $system);
@@ -47,7 +47,7 @@ final class Directory extends FlysystemData implements \Countable
     {
         try {
             return self::open($location, $system);
-        } catch (NoSuchDirectory $e) {
+        } catch (Exceptions\NoSuchDirectory $e) {
             ($system = self::system($system))->getOperator()
                 ->createDirectory($location);
             
