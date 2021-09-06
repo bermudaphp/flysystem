@@ -9,7 +9,6 @@ use Bermuda\Utils\Headers\ContentDisposition;
 use Bermuda\Utils\MimeType;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
-use vendor\bermudaphp\flysystem\src\exceptions\NoSuchFileException;
 
 class File extends FlysystemData implements StreamInterface
 {
@@ -48,7 +47,7 @@ class File extends FlysystemData implements StreamInterface
      * @param int $bytesPerIteration
      * @return static
      * @throws \League\Flysystem\FilesystemException
-     * @throws NoSuchFileException
+     * @throws Exceptions\NoSuchFileException;
      */
     public static function open(
         string $filename, ?Flysystem $system = null,
@@ -95,7 +94,7 @@ class File extends FlysystemData implements StreamInterface
             return self::open($filename, $system, $bytesPerIteration);
         }
 
-        catch (NoSuchFileException $e)
+        catch (Exceptions\NoSuchFileException $e)
         {
             $system->getOperator()->write($filename, $content);
             return self::open($filename, $system, $bytesPerIteration);
