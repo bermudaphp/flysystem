@@ -2,7 +2,7 @@
 
 namespace Bermuda\Flysystem\Exceptions;
 
-final class NoSuchDirectoryException extends \RuntimeException
+final class NoSuchDirectory extends \RuntimeException
 {
     public function __construct(string $location)
     {
