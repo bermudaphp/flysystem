@@ -146,12 +146,12 @@ class File extends FlysystemData implements StreamInterface
      */
     public function responde(ResponseInterface $response, bool $inline = false): ResponseInterface
     {
-        $desposition = $inline ? ContentDisposition::inline
+        $disposition = $inline ? ContentDisposition::inline
             : ContentDisposition::attachment($this->getName());
 
         ($response = $response->withHeader(Header::contentDescription, 'File-transfer')
             ->withHeader(Header::contentType, $this->getMimeType())
-            ->withHeader(Header::contentDisposition, $desposition)
+            ->withHeader(Header::contentDisposition, $disposition)
             ->withHeader(Header::contentLength, $this->getSize())
             ->withHeader(Header::contentTransferEncoding, 'binary')
             ->withHeader(Header::expires, 0)
