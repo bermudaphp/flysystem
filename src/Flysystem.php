@@ -116,15 +116,16 @@ final class Flysystem
      * @param string $location
      * @return File|Directory|null
      * @throws FilesystemException
+     * @throws Exceptions\NoSuchFile|Exceptions\NoSuchDirectory
      */
     public function open(string $location): File|Directory|null
     {
         try {
             $this->openFile($location);
-        } catch (InvalidArgumentException $thr) {
+        } catch (Exceptions\NoSuchFile $thr) {
             try {
                 return $this->openDirectory($location);
-            } catch (InvalidArgumentException $e) {
+            } catch (Exceptions\NoSuchDirectory $e) {
                 return null;
             }
         }
@@ -137,6 +138,7 @@ final class Flysystem
      * @param string $content
      * @return File
      * @throws FilesystemException
+     * @throws Exceptions\NoSuchFile
      */
     public function openFile(?string $filename = null): File
     {
@@ -147,6 +149,7 @@ final class Flysystem
      * @param string $location
      * @return Directory
      * @throws FilesystemException
+     * @throws Exceptions\NoSuchDirectory
      */
     public function openDirectory(string $location): Directory
     {
