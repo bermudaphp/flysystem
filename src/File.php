@@ -4,7 +4,12 @@ namespace Bermuda\Flysystem;
 
 use Bermuda\String\Str;
 use Bermuda\Iterator\StreamIterator;
+use Bermuda\Utils\Header;
+use Bermuda\Utils\Headers\ContentDisposition;
+use Bermuda\Utils\MimeType;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
+use vendor\bermudaphp\flysystem\src\exceptions\NoSuchFileException;
 
 class File extends FlysystemData implements StreamInterface
 {
@@ -43,6 +48,7 @@ class File extends FlysystemData implements StreamInterface
      * @param int $bytesPerIteration
      * @return static
      * @throws \League\Flysystem\FilesystemException
+     * @throws NoSuchFileException
      */
     public static function open(
         string $filename, ?Flysystem $system = null,
@@ -51,9 +57,7 @@ class File extends FlysystemData implements StreamInterface
     {
         if (!($system = self::system($system))->isFile($filename))
         {
-            throw new \InvalidArgumentException(
-                sprintf('No such file: %s', $filename)
-            );
+            throw new NoSuchFileException($filename);
         }
 
         if ($system->isImage($filename))
@@ -91,7 +95,7 @@ class File extends FlysystemData implements StreamInterface
             return self::open($filename, $system, $bytesPerIteration);
         }
 
-        catch (\InvalidArgumentException $e)
+        catch (NoSuchFileException $e)
         {
             $system->getOperator()->write($filename, $content);
             return self::open($filename, $system, $bytesPerIteration);
@@ -134,6 +138,26 @@ class File extends FlysystemData implements StreamInterface
         }
 
         return $this->stream;
+    }
+
+    /**
+     * @param ResponseInterface $response
+     * @return ResponseInterface
+     * @throws \League\Flysystem\FilesystemException
+     */
+    public function responde(ResponseInterface $response): ResponseInterface
+    {
+        $response->withHeader(Header::contentDescription, 'File-transfer')
+            ->withHeader(Header::contentType, $this->getMimeType())
+            ->withHeader(Header::contentDisposition, ContentDisposition::attachment($this->getName()))
+            ->withHeader(Header::contentLength, $this->getSize())
+            ->withHeader(Header::contentTransferEncoding, 'binary')
+            ->withHeader(Header::expires, 0)
+            ->withHeader(Header::cacheControl, 'must-revalidate')
+            ->withHeader(Header::pragma, 'public')
+            ->getBody()->write($this);
+
+        return $response;
     }
 
     /**
