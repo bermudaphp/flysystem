@@ -49,12 +49,7 @@ class File extends FlysystemData implements StreamInterface
         int $bytesPerIteration = 1024
     ): self
     {
-        if ($system === null)
-        {
-            $system = new Flysystem();
-        }
-
-        if (!$system->isFile($filename))
+        if (!($system = self::system($system))->isFile($filename))
         {
             throw new \InvalidArgumentException(
                 sprintf('No such file: %s', $filename)
@@ -81,11 +76,8 @@ class File extends FlysystemData implements StreamInterface
                                   int $bytesPerIteration = 1024
     ): self
     {
-        if ($system === null)
-        {
-            $system = new Flysystem();
-        }
-
+        $system = self::system($system);
+        
         if ($filename === null)
         {
             $extension = $system->extension($content, true);
