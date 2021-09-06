@@ -33,29 +33,6 @@ abstract class FlysystemData implements Stringable, Arrayable, \IteratorAggregat
 
     abstract public function getSize(): int ;
     
-    /**
-     * @param string $filename
-     * @param Flysystem|null $system
-     * @param int $bytesPerIteration
-     * @return static
-     * @throws \League\Flysystem\FilesystemException
-     * @throws Exceptions\NoSuchFile|Exceptions\NoSuchDirectory
-     */
-    abstract public static function open(string $filename, ?Flysystem $system = null): self ;
-    
-    /**
-     * @param string|null $filename
-     * @param string $content
-     * @param Flysystem|null $system
-     * @param int $bytesPerIteration
-     * @return static
-     * @throws \League\Flysystem\FilesystemException
-     */
-    abstract public static function create(
-        ?string $filename = null, string $content = '',
-        Flysystem $system = null
-    ): self ;
-
     protected function getLastSegment(): string
     {
         $segments = $this->getSegments();
