@@ -137,7 +137,7 @@ final class Flysystem
     public function open(string $location): File|Directory|null
     {
         try {
-            $this->openFile($location);
+            return $this->openFile($location);
         } catch (Exceptions\NoSuchFile $thr) {
             try {
                 return $this->openDirectory($location);
