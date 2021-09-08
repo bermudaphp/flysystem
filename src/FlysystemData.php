@@ -9,14 +9,14 @@ use League\Flysystem\FilesystemOperator;
 
 abstract class FlysystemData implements Stringable, Arrayable, \IteratorAggregate
 {
+    protected Location $location;
+
     protected ?string $name = null;
     protected ?string $path = null;
-
-    protected const separator = DIRECTORY_SEPARATOR;
-
-    protected function __construct(protected string $location, protected Flysystem $flysystem)
+    
+    protected function __construct(string $location, protected Flysystem $flysystem)
     {
-        $this->location = $this->normalizePath($location);
+        $this->location = new Location($location);
     }
     
     protected static function system(?Flysystem $system = null): Flysystem
@@ -27,30 +27,12 @@ abstract class FlysystemData implements Stringable, Arrayable, \IteratorAggregat
     final public function getPath(): string
     {
         return $this->path === null ? 
-            $this->path = implode(self::separator, $this->getSegments(true)) 
+            $this->path = $this->location->toArray(true) 
             : $this->path;
     }
 
     abstract public function getSize(): int ;
     
-    protected function getLastSegment(): string
-    {
-        $segments = $this->getSegments();
-        return array_pop($segments);
-    }
-    
-    protected function getSegments(bool $withoodLastSegment = false): array
-    {
-        $segments = explode(static::separator, $this->location);
-        !$withoodLastSegment ?: array_pop($segments);   
-        return $segments;
-    }
-    
-    protected function normalizePath(string $path): string
-    {
-        return rtrim(str_replace(['/', '\\'], static::separator, $path), static::separator);
-    }
-
     /**
      * @return int
      * @throws \League\Flysystem\FilesystemException
@@ -67,7 +49,9 @@ abstract class FlysystemData implements Stringable, Arrayable, \IteratorAggregat
      */
     final public function getName(): string
     {
-        return $this->name === null ? $this->name = $this->getLastSegment() : $this->name;
+        return $this->name === null ? 
+            $this->name = $this->location->lastSegment() 
+            : $this->name;
     }
 
     /**
