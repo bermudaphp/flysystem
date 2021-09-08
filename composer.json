@@ -14,7 +14,7 @@
         "nesbot/carbon": "^2.52.0",
         "league/flysystem": "^2.2.3",
         "nyholm/psr7": "^1.4.1",
-        "bermudaphp/utils": "^1.1",
+        "bermudaphp/utils": "^1.2.2",
         "psr/container": "^1.1.1",
         "bermudaphp/config": "^1.0"
     }
