@@ -27,7 +27,7 @@ abstract class FlysystemData implements Stringable, Arrayable, \IteratorAggregat
     final public function getPath(): string
     {
         return $this->path === null ? 
-            $this->path = $this->location->toArray(true) 
+            $this->path = $this->location->up();
             : $this->path;
     }
 
