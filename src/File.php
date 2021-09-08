@@ -182,7 +182,7 @@ class File extends FlysystemData implements StreamInterface
         }
 
         $this->move($filename = $this->getPath() . static::separator . $name);
-        $this->location = $filename;
+        $this->location = new Location($filename);
         $this->name = $name;
     }
 
@@ -247,8 +247,7 @@ class File extends FlysystemData implements StreamInterface
     {
         if ($this->flysystem->isDirectory($destination))
         {
-            $destination = rtrim($destination, '\/') .
-                static::separator . $this->getName();
+            $destination = (new Location($destination))->append($this->getName());
         }
 
         $this->flysystem->getOperator()->move($this->location, $destination);
