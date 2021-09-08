@@ -2,10 +2,10 @@
 
 namespace Bermuda\Flysystem;
 
-use Bermuda\Flysystem\Validation\UploadedFileValidationExtension;
 use Bermuda\Utils\Header;
-use Bermuda\Utils\MimeType;
 use Bermuda\String\Json;
+use Bermuda\Utils\Types\Application;
+use Bermuda\Utils\Types\Text;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -14,10 +14,11 @@ use Psr\Http\Message\UploadedFileInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Bermuda\Flysystem\Validation\UploadedFileValidator;
 use Bermuda\Flysystem\Validation\UploadedFileValidatorInterface;
+use Bermuda\Flysystem\Validation\UploadedFileValidationExtension;
 
-final class UploadedFilesHandler implements RequestHandlerInterface, FileProcessorInterface
+final class FileUploadHandler implements RequestHandlerInterface, FileProcessorInterface
 {
-    private string $tmpDir = '/uploads/tmp_';
+    private Location $location;
 
     public function __construct(
         private ResponseFactoryInterface $responseFactory,
@@ -29,12 +30,13 @@ final class UploadedFilesHandler implements RequestHandlerInterface, FileProcess
         $this->validator = $validator ??
             UploadedFileValidator::instantiate([
                 UploadedFileValidator::mimeType => [
-                    MimeType::jpeg,
-                    MimeType::png
+                    Image::jpeg, Image::png
                 ],
                 UploadedFileValidator::fileSize =>
                     UploadedFileValidator::MAX_FILESIZE_5MB
             ]);
+
+        $this->location = new Location('/tmp_');
     }
 
     /**
@@ -45,10 +47,10 @@ final class UploadedFilesHandler implements RequestHandlerInterface, FileProcess
     {
         if ($dir != null)
         {
-            $this->tmpDir = rtrim($dir, '\/');
+            $this->location = new Location($dir);
         }
 
-        return $this->tmpDir;
+        return $this->location;
     }
 
     /**
@@ -83,13 +85,13 @@ final class UploadedFilesHandler implements RequestHandlerInterface, FileProcess
                 {
                     foreach ($file as $value)
                     {
-                        $filesIDs[] = $this->processFile($this->tmpDir, $value);
+                        $filesIDs[] = $this->processFile($this->location, $value);
                     }
 
                     continue;
                 }
 
-                $filesIDs[] = $this->processFile($this->tmpDir, $file);
+                $filesIDs[] = $this->processFile($this->location, $file);
             }
         }
 
@@ -100,12 +102,12 @@ final class UploadedFilesHandler implements RequestHandlerInterface, FileProcess
 
         if (count($filesIDs) > 1)
         {
-            $contentType = MimeType::applicationJson;
+            $contentType = Application::json;
             $filesIDs = Json::encode($filesIDs);
         }
 
         ($response = $this->responseFactory->createResponse(201)
-            ->withHeader(Header::contentType, $contentType ?? MimeType::plain))
+            ->withHeader(Header::contentType, $contentType ?? Text::plain))
             ->getBody()->write(is_string($filesIDs)
                 ? $filesIDs : $filesIDs[0]);
 
@@ -122,7 +124,7 @@ final class UploadedFilesHandler implements RequestHandlerInterface, FileProcess
     {
         $this->validator->validate($uploadedFile);
 
-        $filename = $location . '/' . $uploadedFile->getClientFilename();
+        $filename = (new Location($location))->append($uploadedFile->getClientFilename());
         $this->flysystem->write($filename, (string) $uploadedFile->getStream());
 
         return $uploadedFile->getClientFilename();
@@ -144,7 +146,7 @@ final class UploadedFilesHandler implements RequestHandlerInterface, FileProcess
 
         foreach ($filesIDs as $fileID)
         {
-            ($files[] =$this->flysystem->openFile($this->tmpDir . '/' . $fileID))
+            ($files[] =$this->flysystem->openFile($this->location->append($fileID)))
                 ->move($location);
         }
 
@@ -153,11 +155,11 @@ final class UploadedFilesHandler implements RequestHandlerInterface, FileProcess
 
     private function handleValidationException(UploadedFileValidationExtension $e): ResponseInterface
     {
-        ($r = $this->responseFactory->createResponse(400)
-            ->withHeader(Header::contentType, MimeType::applicationJson))
+        ($response = $this->responseFactory->createResponse(400)
+            ->withHeader(Header::contentType, Application::json))
         ->getBody()
             ->write(json_encode(['errors' => $e->getErrors()]));
 
-        return $r;
+        return $response;
     }
 }
