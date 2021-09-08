@@ -69,7 +69,7 @@ final class Location implements Stringable, Arrayable
         return array_pop($segments);
     }
     
-    public function getUpper(): Location
+    public function up(): Location
     {
         $copy = clone $this;
         $copy->path = $this->implodeSegments($this->toArray(true));
