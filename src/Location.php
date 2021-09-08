@@ -68,6 +68,14 @@ final class Location implements Stringable, Arrayable
         $segments = $this->explodePath();
         return array_pop($segments);
     }
+    
+    public function getUpper(): Location
+    {
+        $copy = clone $this;
+        $copy->path = $this->implodeSegments($this->toArray(true));
+        
+        return $copy;
+    }
 
     private function normalize(string $path): string
     {
