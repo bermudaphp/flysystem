@@ -11,7 +11,7 @@ final class ConfigProvider extends \Bermuda\Config\ConfigProvider
     {
         return [
             Flysystem::class => static fn() => new Flysystem,
-            FileProcessorInterface::class => 'Bermuda\Flysystem\UploadedFilesHandler::fromContainer'
+            FileProcessorInterface::class => 'Bermuda\Flysystem\FileUploadHandler::fromContainer'
         ];
     }
     
@@ -20,6 +20,6 @@ final class ConfigProvider extends \Bermuda\Config\ConfigProvider
      */
     protected function getAliases(): array
     {
-        return [UploadedFilesHandler::class => FileProcessorInterface::class];
+        return [FileUploadHandler::class => FileProcessorInterface::class];
     }
 }
