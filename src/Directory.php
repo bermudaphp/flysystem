@@ -123,8 +123,7 @@ final class Directory extends FlysystemData implements \Countable
      */
     public function exists(string $path): bool
     {
-        $path = $this->location . self::separator . $this->normalizePath($path);
-        return $this->flysystem->exists($path);
+        return $this->flysystem->exists($this->location->append($path));
     }
 
     // public function isRoot(): bool{}
@@ -209,7 +208,7 @@ final class Directory extends FlysystemData implements \Countable
      */
     public function addNewFile(string $filename, string $content): File
     {
-        return File::create($this->location . self::separator . ltrim( $filename, '\/'), $content, $this->system, $this->streamFactory);
+        return File::create($this->location->append($filename), $content, $this->system, $this->streamFactory);
     }
 
     /**
@@ -219,8 +218,7 @@ final class Directory extends FlysystemData implements \Countable
      */
     public function addNewDirectory(string $location): self
     {
-        $location = $this->normalizePath($location);
-        return self::create($this->location . self::separator . $location, $this->flysystem);
+        return self::create($this->location->append($location), $this->flysystem);
     }
 
     /**
