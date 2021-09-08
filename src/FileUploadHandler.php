@@ -6,6 +6,7 @@ use Bermuda\Utils\Header;
 use Bermuda\String\Json;
 use Bermuda\Utils\Types\Application;
 use Bermuda\Utils\Types\Text;
+use Bermuda\Utils\Types\Image as ImageType;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -30,7 +31,7 @@ final class FileUploadHandler implements RequestHandlerInterface, FileProcessorI
         $this->validator = $validator ??
             UploadedFileValidator::instantiate([
                 UploadedFileValidator::mimeType => [
-                    Image::jpeg, Image::png
+                    ImageType::jpeg, ImageType::png
                 ],
                 UploadedFileValidator::fileSize =>
                     UploadedFileValidator::MAX_FILESIZE_5MB
