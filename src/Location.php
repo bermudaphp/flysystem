@@ -7,7 +7,7 @@ use Bermuda\String\Stringable;
 
 final class Location implements Stringable, Arrayable
 {
-    public function __construct(private string $path, private string $separator = DIRECTORY_SEPARATOR)
+    public function __construct(private string $path, private string $separator = '/')
     {
         $this->path = $this->normalize($path);
     }
