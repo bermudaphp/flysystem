@@ -97,6 +97,6 @@ final class Location implements Stringable, Arrayable
             }
         }
 
-        return $path;
+        return ltrim($path, $this->separator);
     }
 }
