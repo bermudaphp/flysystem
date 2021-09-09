@@ -79,8 +79,8 @@ final class Location implements Stringable, Arrayable
 
     private function normalize(string $path): string
     {
-        $segments = $this->explodePath(str_replace(['/', '\\'], $this->separator, $path));
-        return $this->implodeSegments($segments);
+        $path = str_replace(['/', '\\'], $this->separator, $path);
+        return $this->implodeSegments($this->explodePath($path), $path[0] === $this->separator);
     }
 
     private function explodePath(?string $path = null): array
@@ -88,7 +88,7 @@ final class Location implements Stringable, Arrayable
         return explode($this->separator, $path ?? $this->path);
     }
 
-    private function implodeSegments(array $segments): string
+    private function implodeSegments(array $segments, bool $trimSeparator = false): string
     {
         $path = '';
         foreach ($segments as $segment) {
@@ -97,6 +97,6 @@ final class Location implements Stringable, Arrayable
             }
         }
 
-        return ltrim($path, $this->separator);
+        return $trimSeparator ? ltrim($path, $this->separator) : $path;
     }
 }
