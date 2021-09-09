@@ -80,7 +80,7 @@ final class Location implements Stringable, Arrayable
     private function normalize(string $path): string
     {
         $path = str_replace(['/', '\\'], $this->separator, $path);
-        return $this->implodeSegments($this->explodePath($path), $path[0] === $this->separator);
+        return $this->implodeSegments($this->explodePath($path), $path[0] !== $this->separator);
     }
 
     private function explodePath(?string $path = null): array
