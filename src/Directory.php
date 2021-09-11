@@ -91,15 +91,18 @@ final class Directory extends FlysystemData implements Countable
 
     /**
      * @param File|Directory $flysystemData
+     * @return self
      * @throws FilesystemException
      */
-    public function add(File|self $flysystemData): void
+    public function add(File|self $flysystemData): self
     {
         if ($flysystemData instanceof self) {
             $flysystemData->copy($this->location->append($flysystemData->getName()));
         } else {
             $flysystemData->copy($this->location, true);
         }
+        
+        return $this;
     }
 
     /**
