@@ -148,9 +148,10 @@ class File extends FlysystemData implements StreamInterface
 
     /**
      * @param string|null $name
+     * @return self
      * @throws FilesystemException
      */
-    final public function rename(?string $name = null): void
+    final public function rename(?string $name = null): self
     {
         if ($name === null) {
             $name = Str::filename($this->getExtension());
@@ -163,6 +164,8 @@ class File extends FlysystemData implements StreamInterface
         $this->move($location);
         $this->location = $location;
         $this->name = $name;
+        
+        return $this;
     }
 
     /**
@@ -180,9 +183,10 @@ class File extends FlysystemData implements StreamInterface
 
     /**
      * @param string $destination
+     * @return self
      * @throws FilesystemException
      */
-    final public function move(string $destination): void
+    final public function move(string $destination): self
     {
         $destination = new Location($destination);
 
@@ -197,6 +201,8 @@ class File extends FlysystemData implements StreamInterface
         $this->stream = null;
         $this->name = null;
         $this->path = null;
+        
+        return $this;
     }
 
     /**
