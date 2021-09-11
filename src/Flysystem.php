@@ -203,7 +203,13 @@ final class Flysystem
      */
     public function extension(string $filenameOrContent, bool $isContent = false): string
     {
-        return $this->finfoBuffer(FILEINFO_EXTENSION, $filenameOrContent, $isContent);
+        $result = $this->finfoBuffer(FILEINFO_EXTENSION, $filenameOrContent, $isContent);
+
+        if (str_contains($result, '/')) {
+            return (new Stringy($result))->after('/');
+        }
+
+        return $result;
     }
 
     /**
