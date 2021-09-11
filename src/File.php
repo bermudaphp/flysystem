@@ -2,13 +2,13 @@
 
 namespace Bermuda\Flysystem;
 
+use RuntimeException;
 use Bermuda\String\Str;
-use Bermuda\Iterator\StreamIterator;
 use Bermuda\Utils\Header;
+use Bermuda\Iterator\StreamIterator;
+use League\Flysystem\FilesystemException;
 use Bermuda\Utils\Headers\ContentDisposition;
-use Bermuda\Utils\MimeType;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\StreamInterface;
+use Psr\Http\Message\{ResponseInterface, StreamInterface};
 
 class File extends FlysystemData implements StreamInterface
 {
@@ -26,88 +26,27 @@ class File extends FlysystemData implements StreamInterface
      * @param Flysystem $flysystem
      * @param int $bytesPerIteration
      */
-    private function __construct(string $filename, Flysystem $flysystem,
-        private int $bytesPerIteration = 1024
+    private function __construct(string      $filename, Flysystem $flysystem,
+                                 private int $bytesPerIteration = 1024
     )
     {
         parent::__construct($filename, $flysystem);
     }
 
     /**
-     * @throws \RuntimeException
+     * @throws RuntimeException
      */
     final public function __clone(): void
     {
-        throw new \RuntimeException('This object is not cloneable');
+        throw new RuntimeException('This object is not cloneable');
     }
 
-    /**
-     * @param string $filename
-     * @param Flysystem|null $system
-     * @param int $bytesPerIteration
-     * @return static
-     * @throws \League\Flysystem\FilesystemException
-     * @throws Exceptions\NoSuchFile;
-     */
-    public static function open(
-        string $filename, ?Flysystem $system = null,
-        int $bytesPerIteration = 1024
-    ): self
-    {
-        if (!($system = self::system($system))->isFile($filename))
-        {
-            throw new Exceptions\NoSuchFile($filename);
-        }
-
-        if ($system->isImage($filename))
-        {
-            return new Image($filename, $system, $bytesPerIteration);
-        }
-
-        return new self($filename, $system, $bytesPerIteration);
-    }
-
-    /**
-     * @param string|null $filename
-     * @param string $content
-     * @param Flysystem|null $system
-     * @param int $bytesPerIteration
-     * @return static
-     * @throws \League\Flysystem\FilesystemException
-     */
-    public static function create(?string $filename = null, string $content = '', Flysystem $system = null,
-                                  int $bytesPerIteration = 1024
-    ): self
-    {
-        $system = self::system($system);
-        
-        if ($filename === null)
-        {
-            $extension = $system->extension($content, true);
-            $filename  = Str::filename($extension);
-
-            $system->getOperator()->write($filename, $content);
-            return self::open($filename, $system, $bytesPerIteration);
-        }
-
-        try {
-            return self::open($filename, $system, $bytesPerIteration);
-        }
-
-        catch (Exceptions\NoSuchFile $e)
-        {
-            $system->getOperator()->write($filename, $content);
-            return self::open($filename, $system, $bytesPerIteration);
-        }
-    }
-    
     /**
      * @return int
      */
     public function bytesPerIteration(?int $bytes = null): int
     {
-        if ($bytes !== null)
-        {
+        if ($bytes !== null) {
             return $this->bytesPerIteration = $bytes;
         }
 
@@ -115,36 +54,12 @@ class File extends FlysystemData implements StreamInterface
     }
 
     /**
-     * @return resource
-     * @throws \League\Flysystem\FilesystemException
-     */
-    final public function getFileHandler()
-    {
-        if ($this->fileHandler == null)
-        {
-            $this->fileHandler = $this->flysystem->getOperator()->readStream($this->location);
-        }
-
-        return $this->fileHandler;
-    }
-
-    private function getStream(): StreamInterface
-    {
-        if ($this->stream == null)
-        {
-            $handler = $this->getFileHandler();
-            $this->stream =$this->flysystem->getStreamFactory()->createStreamFromResource($handler);
-        }
-
-        return $this->stream;
-    }
-
-    /**
      * @param ResponseInterface $response
+     * @param bool $inline
      * @return ResponseInterface
-     * @throws \League\Flysystem\FilesystemException
+     * @throws FilesystemException
      */
-    public function responde(ResponseInterface $response, bool $inline = false): ResponseInterface
+    public function respond(ResponseInterface $response, bool $inline = false): ResponseInterface
     {
         $disposition = $inline ? ContentDisposition::inline
             : ContentDisposition::attachment($this->getName());
@@ -163,6 +78,67 @@ class File extends FlysystemData implements StreamInterface
     }
 
     /**
+     * @inerhitDoc
+     */
+    final public function write($string): int
+    {
+        return $this->getStream()->write($string);
+    }
+
+    private function getStream(): StreamInterface
+    {
+        if ($this->stream == null) {
+            $handler = $this->getFileHandler();
+            $this->stream = $this->flysystem->getStreamFactory()->createStreamFromResource($handler);
+        }
+
+        return $this->stream;
+    }
+
+    /**
+     * @return resource
+     * @throws FilesystemException
+     */
+    final public function getFileHandler()
+    {
+        if ($this->fileHandler == null) {
+            $this->fileHandler = $this->flysystem->getOperator()->readStream($this->location);
+        }
+
+        return $this->fileHandler;
+    }
+
+    /**
+     * @return string
+     */
+    final public function getMimeType(): string
+    {
+        if ($this->mimeType == null) {
+            return $this->mimeType = $this->flysystem->mimeType($this->location);
+        }
+
+        return $this->mimeType;
+    }
+
+    /**
+     * @return int
+     * @throws FilesystemException
+     */
+    final public function getSize(): int
+    {
+        return $this->flysystem->getOperator()->fileSize($this->location);
+    }
+
+    /**
+     * @return string
+     * @throws FilesystemException
+     */
+    final public function getContents(): string
+    {
+        return $this->flysystem->getOperator()->read($this->location);
+    }
+
+    /**
      * @return StreamIterator
      */
     final public function getIterator(int $bytesPerIteration = null): StreamIterator
@@ -171,51 +147,31 @@ class File extends FlysystemData implements StreamInterface
     }
 
     /**
-     * @param string $name
-     * @throws \League\Flysystem\FilesystemException
+     * @param string|null $name
+     * @throws FilesystemException
      */
-    final public function rename(string $name): void
+    final public function rename(?string $name = null): void
     {
-        if (!str_contains($name, '.'))
-        {
+        if ($name === null) {
+            $name = Str::filename($this->getExtension());
+        } elseif (!str_contains($name, '.')) {
             $name = sprintf('%s.%s', $name, $this->getExtension());
         }
 
-        $this->move($filename = $this->getPath() . static::separator . $name);
-        $this->location = new Location($filename);
+        $location = $this->location->up()->append($name);
+
+        $this->move($location);
+        $this->location = $location;
         $this->name = $name;
     }
 
     /**
      * @return string
-     */
-    public function getFilename(): string
-    {
-        return $this->location;
-    }
-
-    /**
-     * @return string
-     * @throws \League\Flysystem\FilesystemException
-     */
-    final public function getMimeType(): string
-    {
-        if ($this->mimeType == null)
-        {
-            return $this->mimeType = $this->flysystem->mimeType($this->location);
-        }
-
-        return $this->mimeType;
-    }
-
-    /**
-     * @return string
-     * @throws \League\Flysystem\FilesystemException
+     * @throws FilesystemException
      */
     final public function getExtension(): string
     {
-        if ($this->extension == null)
-        {
+        if ($this->extension == null) {
             return $this->extension = $this->flysystem->extension($this->location);
         }
 
@@ -223,31 +179,15 @@ class File extends FlysystemData implements StreamInterface
     }
 
     /**
-     * @throws \League\Flysystem\FilesystemException
-     */
-    final public function delete(): void
-    {
-        $this->flysystem->getOperator()->delete($this->location);
-    }
-
-    /**
-     * @return int
-     * @throws \League\Flysystem\FilesystemException
-     */
-    final public function getSize(): int
-    {
-        return $this->flysystem->getOperator()->fileSize($this->location);
-    }
-
-    /**
      * @param string $destination
-     * @throws \League\Flysystem\FilesystemException
+     * @throws FilesystemException
      */
     final public function move(string $destination): void
     {
-        if ($this->flysystem->isDirectory($destination))
-        {
-            $destination = (new Location($destination))->append($this->getName());
+        $destination = new Location($destination);
+
+        if ($this->flysystem->isDirectory($destination)) {
+            $destination = $destination->append($this->getName());
         }
 
         $this->flysystem->getOperator()->move($this->location, $destination);
@@ -260,23 +200,94 @@ class File extends FlysystemData implements StreamInterface
     }
 
     /**
+     * @return string
+     */
+    public function getFilename(): string
+    {
+        return $this->location;
+    }
+
+    /**
+     * @throws FilesystemException
+     */
+    final public function delete(): void
+    {
+        $this->flysystem->getOperator()->delete($this->location);
+    }
+
+    /**
      * @param string $destination
      * @param bool $destinationIsDir
-     * @throws \League\Flysystem\FilesystemException
+     * @throws FilesystemException
      */
     final public function copy(string $destination, bool $destinationIsDir = false): self
     {
-        if ($destinationIsDir)
-        {
-            $destination = $this->normalizePath($destination) . static::separator . $this->getName();
+        $destination = new Location($destination);
+
+        if ($destinationIsDir) {
+            $destination = $destination->append($this->getName());
         }
 
         return self::create($destination, $this->getContents(), $this->flysystem, $this->bytesPerIteration);
     }
 
     /**
+     * @param string|null $filename
+     * @param string $content
+     * @param Flysystem|null $system
+     * @param int $bytesPerIteration
+     * @return static
+     * @throws FilesystemException
+     */
+    public static function create(?string $filename = null, string $content = '', Flysystem $system = null,
+                                  int     $bytesPerIteration = 1024
+    ): self
+    {
+        $system = self::system($system);
+
+        if ($filename === null) {
+            $extension = $system->extension($content, true);
+            $filename = Str::filename($extension);
+
+            $system->getOperator()->write($filename, $content);
+            return self::open($filename, $system, $bytesPerIteration);
+        }
+
+        try {
+            return self::open($filename, $system, $bytesPerIteration);
+        } catch (Exceptions\NoSuchFile) {
+            $system->getOperator()->write($filename, $content);
+            return self::open($filename, $system, $bytesPerIteration);
+        }
+    }
+
+    /**
+     * @param string $filename
+     * @param Flysystem|null $system
+     * @param int $bytesPerIteration
+     * @return static
+     * @throws FilesystemException
+     * @throws Exceptions\NoSuchFile;
+     */
+    public static function open(
+        string $filename, ?Flysystem $system = null,
+        int    $bytesPerIteration = 1024
+    ): self
+    {
+        if (!($system = self::system($system))->isFile($filename)) {
+            throw new Exceptions\NoSuchFile($filename);
+        }
+
+        if ($system->isImage($filename)) {
+            return new Image($filename, $system, $bytesPerIteration);
+        }
+
+        return new self($filename, $system, $bytesPerIteration);
+    }
+
+    /**
      * @return array
-     * @throws \League\Flysystem\FilesystemException
+     * @throws FilesystemException
      */
     public function toArray(): array
     {
@@ -364,14 +375,6 @@ class File extends FlysystemData implements StreamInterface
     /**
      * @inerhitDoc
      */
-    final public function write($string): int
-    {
-        return $this->getStream()->write($string);
-    }
-
-    /**
-     * @inerhitDoc
-     */
     final public function isReadable(): bool
     {
         return $this->getStream()->isReadable();
@@ -383,15 +386,6 @@ class File extends FlysystemData implements StreamInterface
     final public function read($length): string
     {
         return $this->getStream()->read($length);
-    }
-
-    /**
-     * @return string
-     * @throws \League\Flysystem\FilesystemException
-     */
-    final public function getContents(): string
-    {
-        return $this->flysystem->getOperator()->read($this->location);
     }
 
     /**
