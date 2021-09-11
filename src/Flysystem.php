@@ -3,15 +3,12 @@
 namespace Bermuda\Flysystem;
 
 use finfo;
+use Carbon\Carbon;
 use BadMethodCallException;
-use Bermuda\String\Str;
-use Bermuda\String\Stringy;
-use Carbon\CarbonInterface;
-use InvalidArgumentException;
-use League\Flysystem\FilesystemException;
-use League\Flysystem\FilesystemOperator;
+use Bermuda\String\{Str, Stringy};
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Psr\Http\Message\StreamFactoryInterface;
+use League\Flysystem\{FilesystemOperator, FilesystemException};
 
 /**
  * @mixin FilesystemOperator
@@ -101,11 +98,11 @@ final class Flysystem
     {
         return $this->operator;
     }
-    
+
     /**
      * @return float|null
      */
-    public function diskTotalSpace():? float
+    public function diskTotalSpace(): ?float
     {
         return ($space = @disk_total_space(getcwd())) !== false ? $space : null;
     }
@@ -113,7 +110,7 @@ final class Flysystem
     /**
      * @return float|null
      */
-    public function diskFreeSpace():? float
+    public function diskFreeSpace(): ?float
     {
         return ($space = @disk_free_space(getcwd())) !== false ? $space : null;
     }
@@ -123,7 +120,7 @@ final class Flysystem
      * @param bool $asCarbon
      * @return int|Carbon
      */
-    public function lastModified(string $location, bool $asCarbon = true): int|CarbonInterface
+    public function lastModified(string $location, bool $asCarbon = true): int|Carbon
     {
         return $this->open($location)->lastModified($asCarbon);
     }
@@ -164,7 +161,6 @@ final class Flysystem
     /**
      * @param string $location
      * @return Directory
-     * @throws FilesystemException
      * @throws Exceptions\NoSuchDirectory
      */
     public function openDirectory(string $location): Directory
