@@ -206,7 +206,7 @@ final class Flysystem
         $result = $this->finfoBuffer(FILEINFO_EXTENSION, $filenameOrContent, $isContent);
 
         if (str_contains($result, '/')) {
-            return (new Stringy($result))->after('/');
+            return (new Stringy($result))->before('/');
         }
 
         return $result;
