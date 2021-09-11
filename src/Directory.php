@@ -21,7 +21,7 @@ final class Directory extends FlysystemData implements Countable
      * @param bool $deleteMerged
      * @throws FilesystemException
      */
-    public function merge(array $directories, bool $deleteMerged = false): void
+    public function merge(array $directories, bool $deleteMerged = false): self
     {
         foreach ($directories as $directory) {
             /**
@@ -35,6 +35,8 @@ final class Directory extends FlysystemData implements Countable
                 $directory->delete();
             }
         }
+        
+        return $this;
     }
 
     /**
@@ -52,6 +54,18 @@ final class Directory extends FlysystemData implements Countable
         }
 
         return $directory;
+    }
+
+    /**
+     * @param string $destination
+     * @return self
+     * @throws FilesystemException
+     */
+    public function move(string $destination): self
+    {
+        $new = $this->copy($destination);
+        $this->delete();
+        return $new;
     }
 
     /**
@@ -91,18 +105,15 @@ final class Directory extends FlysystemData implements Countable
 
     /**
      * @param File|Directory $flysystemData
-     * @return self
      * @throws FilesystemException
      */
-    public function add(File|self $flysystemData): self
+    public function add(File|self $flysystemData): void
     {
         if ($flysystemData instanceof self) {
             $flysystemData->copy($this->location->append($flysystemData->getName()));
         } else {
             $flysystemData->copy($this->location, true);
         }
-        
-        return $this;
     }
 
     /**
