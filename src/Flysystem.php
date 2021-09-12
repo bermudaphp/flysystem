@@ -112,7 +112,11 @@ final class Flysystem
      */
     public function diskUsedSpace():? float
     {
-        return $this->diskTotalSpace() - $this->diskFreeSpace();
+        if (($space = $this->diskTotalSpace()) === null) {
+            return null;
+        }
+        
+        return $space - $this->diskFreeSpace();
     }
 
     /**
