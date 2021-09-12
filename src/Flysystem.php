@@ -102,15 +102,23 @@ final class Flysystem
     /**
      * @return float|null
      */
-    public function diskTotalSpace(): ?float
+    public function diskTotalSpace():? float
     {
         return ($space = @disk_total_space(getcwd())) !== false ? $space : null;
+    }
+    
+    /**
+     * @return float|null
+     */
+    public function diskUsedSpace():? float
+    {
+        return $this->diskTotalSpace() - $this->diskFreeSpace();
     }
 
     /**
      * @return float|null
      */
-    public function diskFreeSpace(): ?float
+    public function diskFreeSpace():? float
     {
         return ($space = @disk_free_space(getcwd())) !== false ? $space : null;
     }
