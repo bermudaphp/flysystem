@@ -64,6 +64,21 @@ final class Flysystem
 
         return $this->operator->fileExists($location) && $this->mimeTypeComparison($type, $location);
     }
+    
+    /**
+     * @param string $location
+     * @return int
+     * @throws FilesystemException
+     */
+    public function fileSize(string $location = '/'): int
+    {
+        if ($this->isDirectory($location))
+        {
+            return $this->openDirectory($location)->getSize();
+        }
+
+        return $this->operator->fileSize($location);
+    }
 
     private function mimeTypeComparison(string $type, string $contentOrFile, bool $isContent = false): bool
     {
