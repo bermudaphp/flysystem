@@ -201,7 +201,7 @@ final class Directory extends FlysystemData implements Countable
         $count = 0;
 
         foreach ($this as $item) {
-            $count += $recursive ? $item->count() + 1 : 1;
+            $count += $recursive && $item instanceof self ? $item->count() + 1 : 1;
         }
 
         return $count;
