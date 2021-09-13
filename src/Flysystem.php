@@ -246,7 +246,7 @@ final class Flysystem
      */
     public function isImage(string $filenameOrContent, bool $isContent = false): bool
     {
-        return $this->mimeTypeComparison('image', $filenameOrContent, true);
+        return $this->mimeTypeComparison('image', $filenameOrContent, $isContent);
     }
 
     /**
