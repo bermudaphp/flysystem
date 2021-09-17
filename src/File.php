@@ -399,6 +399,6 @@ class File extends FlysystemData implements StreamInterface
      */
     final public function getMetadata($key = null)
     {
-        $this->getStream()->getMetadata($key);
+        return $this->getStream()->getMetadata($key);
     }
 }
