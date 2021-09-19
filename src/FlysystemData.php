@@ -51,7 +51,7 @@ abstract class FlysystemData implements Stringable, Arrayable, IteratorAggregate
     final public function getName(): string
     {
         return $this->name === null ?
-            $this->name = $this->location->lastSegment()
+            $this->name = $this->location->basename()
             : $this->name;
     }
 
