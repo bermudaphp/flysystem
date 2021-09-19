@@ -39,6 +39,15 @@ final class Directory extends FlysystemData implements Countable
         return $this;
     }
 
+    final public function up():? self
+    {
+        if (($loc = $this->location->up()) === '/') {
+            return null;
+        }
+
+        return $this->flysystem->openDirectory($loc);
+    }
+
     /**
      * @param string $destination
      * @return Directory
