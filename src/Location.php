@@ -55,7 +55,7 @@ final class Location implements Stringable, Arrayable
     {
         $copy = clone $this;
         $copy->path = $this->implodeSegments($segments)
-            . DIRECTORY_SEPARATOR . $this->path;
+            . this->separator . $this->path;
 
         return $copy;
     }
