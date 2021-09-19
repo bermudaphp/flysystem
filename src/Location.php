@@ -10,7 +10,6 @@ use function Bermuda\substring;
 
 final class Location implements Stringable, Arrayable
 {
-    private const separator = '/';
     public function __construct(private string $path)
     {
         $this->path = empty($path) ? self::separator
