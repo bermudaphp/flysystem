@@ -61,7 +61,7 @@ class File extends FlysystemData implements StreamInterface
      */
     public function respond(ResponseInterface $response, bool $inline = false): ResponseInterface
     {
-        $disposition = $inline ? ContentDisposition::inline
+        $disposition = $inline ? ContentDisposition::inline . '; filename="'.$this->getName().'"'
             : ContentDisposition::attachment($this->getName());
 
         ($response = $response->withHeader(Header::contentDescription, 'File-transfer')
@@ -211,6 +211,14 @@ class File extends FlysystemData implements StreamInterface
     public function getFilename(): string
     {
         return $this->location;
+    }
+
+    /**
+     * @return Directory
+     */
+    public function getDirictory(): Directory
+    {
+        return $this->flysystem->openDirectory($this->location->up());
     }
 
     /**
