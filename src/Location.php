@@ -3,13 +3,17 @@
 namespace Bermuda\Flysystem;
 
 use Bermuda\Arrayable;
+use Bermuda\String\Str;
 use Bermuda\String\Stringable;
+use League\Flysystem\PathNormalizer;
 
 final class Location implements Stringable, Arrayable
 {
-    public function __construct(private string $path, private string $separator = '/')
+    private const separator = '/';
+    public function __construct(private string $path)
     {
-        $this->path = $this->normalize($path);
+        $this->path = empty($path) ? self::separator
+            : $this->normalize($path);
     }
 
     /**
@@ -21,14 +25,14 @@ final class Location implements Stringable, Arrayable
     }
 
     /**
-     * @param bool $withoutLastSegment
+     * @param bool $withoutBasename
      * @return array
      */
-    public function toArray(bool $withoutLastSegment = false): array
+    public function toArray(bool $withoutBasename = false): array
     {
-        $segments = $this->explodePath();
+        $segments = $this->explode();
 
-        if ($withoutLastSegment) {
+        if ($withoutBasename) {
             array_pop($segments);
         }
 
@@ -42,7 +46,7 @@ final class Location implements Stringable, Arrayable
     public function append(string ... $segments): Location
     {
         $copy = clone $this;
-        $copy->path .= $this->implodeSegments($segments);
+        $copy->path .= $this->implode($segments);
 
         return $copy;
     }
@@ -54,8 +58,8 @@ final class Location implements Stringable, Arrayable
     public function prepend(string ... $segments): Location
     {
         $copy = clone $this;
-        $copy->path = $this->implodeSegments($segments)
-            . this->separator . $this->path;
+        $copy->path = $this->implode($segments) 
+            . self::separator . $this->path;
 
         return $copy;
     }
@@ -63,40 +67,51 @@ final class Location implements Stringable, Arrayable
     /**
      * @return string
      */
-    public function lastSegment(): string
+    public function basename(): string
     {
-        $segments = $this->explodePath();
+        $segments = $this->segments();
         return array_pop($segments);
     }
-    
+
+    /**
+     * @return Location
+     */
     public function up(): Location
     {
         $copy = clone $this;
-        $copy->path = $this->implodeSegments($this->toArray(true));
-        
+        $copy->path = $this->implode($this->toArray(true));
+
+        if (empty($copy->path)) {
+            $copy->path = '/';
+        }
+
         return $copy;
     }
 
     private function normalize(string $path): string
     {
-        $path = str_replace(['/', '\\'], $this->separator, $path);
-        return $this->implodeSegments($this->explodePath($path), $path[0] !== $this->separator);
+        if ($path === self::separator){
+            return $path;
+        }
+
+        $path = str_replace('\\', self::separator, $path);
+        return $this->implode($this->explode($path));
     }
 
-    private function explodePath(?string $path = null): array
+    private function explode(?string $path = null): array
     {
-        return explode($this->separator, $path ?? $this->path);
+        return explode(self::separator, $path ?? $this->path);
     }
 
-    private function implodeSegments(array $segments, bool $trimSeparator = false): string
+    private function implode(array $segments): string
     {
         $path = '';
         foreach ($segments as $segment) {
-            if (!empty($segment)) {
-                $path .= $this->separator . trim($segment, '\/');
+            if (!empty($segment) && !Str::equalsAny($segment, ['.', '..'])) {
+                $path .= self::separator . $segment;
             }
         }
 
-        return $trimSeparator ? ltrim($path, $this->separator) : $path;
+        return $path;
     }
 }
