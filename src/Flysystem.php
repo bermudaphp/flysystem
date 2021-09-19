@@ -65,7 +65,8 @@ final class Flysystem
             return $this->operator->fileExists($location);
         }
 
-        return $this->operator->fileExists($location) && $this->mimeTypeComparison($location, $type);
+        return $this->operator->fileExists($location) 
+            && str_contains($this->mimeType($filename), $type);
     }
 
     /**
@@ -81,11 +82,6 @@ final class Flysystem
         }
 
         return $this->operator->fileSize($location);
-    }
-
-    private function mimeTypeComparison(string $filename, string $type): bool
-    {
-        return str_contains($this->mimeType($filename), $type);
     }
 
     /**
