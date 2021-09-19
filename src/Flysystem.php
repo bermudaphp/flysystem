@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use BadMethodCallException;
 use Bermuda\String\{Str, Stringy};
 use Nyholm\Psr7\Factory\Psr17Factory;
+use Bermuda\Detector\{ExtensionDetector, FinfoDetector};
 use Psr\Http\Message\StreamFactoryInterface;
 use League\Flysystem\{FilesystemOperator, FilesystemException};
 
@@ -18,10 +19,12 @@ final class Flysystem
 {
     public function __construct(private ?FilesystemOperator     $operator = null,
                                 private ?StreamFactoryInterface $streamFactory = null
+                                private ?ExtensionDetector      $detector = null
     )
     {
         $this->operator = $operator ?? FileSystemFactory::makeSystem();
         $this->streamFactory = $this->streamFactory ?? new Psr17Factory();
+        $this->detector = $detector ?? new FinfoDetector();
     }
 
     /**
@@ -62,7 +65,7 @@ final class Flysystem
             return $this->operator->fileExists($location);
         }
 
-        return $this->operator->fileExists($location) && $this->mimeTypeComparison($type, $location);
+        return $this->operator->fileExists($location) && $this->mimeTypeComparison($location, $type);
     }
 
     /**
@@ -80,30 +83,18 @@ final class Flysystem
         return $this->operator->fileSize($location);
     }
 
-    private function mimeTypeComparison(string $type, string $contentOrFile, bool $isContent = false): bool
+    private function mimeTypeComparison(string $filename, string $type): bool
     {
-        return Str::contains($this->mimeType($contentOrFile, $isContent), $type);
+        return str_contains($this->mimeType($filename), $type);
     }
 
     /**
-     * @param string $filenameOrContent
-     * @param bool $isContent
+     * @param string $location
      * @return string
      */
-    public function mimeType(string $filenameOrContent, bool $isContent = false): string
+    public function mimeType(string $location): string
     {
-        return $this->finfoBuffer(FILEINFO_MIME_TYPE, $filenameOrContent, $isContent);
-    }
-
-    /**
-     * @param string $mode
-     * @param string $filenameOrContent
-     * @return string
-     */
-    private function finfoBuffer(string $mode, string $filenameOrContent, bool $isContent = false): string
-    {
-        $content = $isContent ? $filenameOrContent : $this->operator->read($filenameOrContent);
-        return (new finfo($mode))->buffer($content);
+        return $this->operator->mimeType($location);
     }
 
     /**
@@ -224,13 +215,13 @@ final class Flysystem
     }
 
     /**
-     * @param string $filenameOrContent
-     * @param bool $isContent
+     * @param string $filename
      * @return string
      */
-    public function extension(string $filenameOrContent, bool $isContent = false): string
+    public function extension(string $filename): string
     {
-        $result = $this->finfoBuffer(FILEINFO_EXTENSION, $filenameOrContent, $isContent);
+        $content = $this->operator->read($filename);
+        $result = $this->detactor->detectExtension($content);
 
         if (str_contains($result, '/')) {
             return (new Stringy($result))->before('/');
@@ -240,23 +231,12 @@ final class Flysystem
     }
 
     /**
-     * @param string $filenameOrContent
-     * @param bool $isContent
+     * @param string $filename
      * @return bool
      */
-    public function isImage(string $filenameOrContent, bool $isContent = false): bool
+    public function isImage(string $filename): bool
     {
-        return $this->mimeTypeComparison('image', $filenameOrContent, $isContent);
-    }
-
-    /**
-     * @param string $content
-     * @param string $type
-     * @return bool
-     */
-    public function is(string $content, string $type): bool
-    {
-        return $this->mimeTypeComparison($type, $content, true);
+        return $this->isFile($filename, 'image');
     }
 
     /**
