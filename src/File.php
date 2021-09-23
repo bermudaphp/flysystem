@@ -3,7 +3,7 @@
 namespace Bermuda\Flysystem;
 
 use RuntimeException;
-use Bermuda\String\Str;
+use Bermuda\String\StringHelper;
 use Bermuda\Utils\Header;
 use Bermuda\Iterator\StreamIterator;
 use League\Flysystem\FilesystemException;
