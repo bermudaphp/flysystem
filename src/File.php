@@ -54,30 +54,6 @@ class File extends FlysystemData implements StreamInterface
     }
 
     /**
-     * @param ResponseInterface $response
-     * @param bool $inline
-     * @return ResponseInterface
-     * @throws FilesystemException
-     */
-    public function respond(ResponseInterface $response, bool $inline = false): ResponseInterface
-    {
-        $disposition = $inline ? ContentDisposition::inline . '; filename="'.$this->getName().'"'
-            : ContentDisposition::attachment($this->getName());
-
-        ($response = $response->withHeader(Header::contentDescription, 'File-transfer')
-            ->withHeader(Header::contentType, $this->getMimeType())
-            ->withHeader(Header::contentDisposition, $disposition)
-            ->withHeader(Header::contentLength, $this->getSize())
-            ->withHeader(Header::contentTransferEncoding, 'binary')
-            ->withHeader(Header::expires, 0)
-            ->withHeader(Header::cacheControl, 'must-revalidate')
-            ->withHeader(Header::pragma, 'public'))
-            ->getBody()->write($this->getContents());
-
-        return $response;
-    }
-
-    /**
      * @inerhitDoc
      */
     final public function write($string): int
@@ -154,7 +130,7 @@ class File extends FlysystemData implements StreamInterface
     final public function rename(?string $name = null): self
     {
         if ($name === null) {
-            $name = Str::filename($this->getExtension());
+            $name = StringHelper::filename($this->getExtension());
         } elseif (!str_contains($name, '.')) {
             $name = sprintf('%s.%s', $name, $this->getExtension());
         }
@@ -261,7 +237,7 @@ class File extends FlysystemData implements StreamInterface
 
         if ($filename === null) {
             $extension = $system->extension($content, true);
-            $filename = Str::filename($extension);
+            $filename = StringHelper::filename($extension);
 
             $system->getOperator()->write($filename, $content);
             return self::open($filename, $system, $bytesPerIteration);
