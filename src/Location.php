@@ -3,16 +3,14 @@
 namespace Bermuda\Flysystem;
 
 use Bermuda\Arrayable;
-use Bermuda\String\Str;
 use Bermuda\String\Stringable;
 use Webmozart\PathUtil\Path;
-use function Bermuda\substring;
 
 final class Location implements Stringable, Arrayable
 {
     public function __construct(private string $path)
     {
-        $this->path = empty($path) ? self::separator
+        $this->path = empty($path) ? '/'
             : Path::canonicalize($this->path);
     }
 
@@ -77,7 +75,7 @@ final class Location implements Stringable, Arrayable
     public function up(): Location
     {
         $copy = clone $this;
-        $copy->path = substring($this->path, length: Str::length($this->basename()));
+        $copy->path = substr($this->path, length: mb_strlen($this->basename()));
 
         return $copy;
     }
