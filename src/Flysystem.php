@@ -259,7 +259,7 @@ final class Flysystem
     /**
      * @param string $location
      * @param callable|null $filter
-     * @return array
+     * @return array<File|Directory>
      * @throws FilesystemException
      */
     public function listContents(string $location = '/', callable $filter = null): array
