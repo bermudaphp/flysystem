@@ -20,6 +20,9 @@ final class ConfigProvider extends \Bermuda\Config\ConfigProvider
      */
     protected function getAliases(): array
     {
-        return [FileUploadHandler::class => FileProcessorInterface::class];
+        return [
+            'fs' => Flysystem::class,
+            FileUploadHandler::class => FileProcessorInterface::class
+        ];
     }
 }
