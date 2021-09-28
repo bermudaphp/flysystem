@@ -37,7 +37,7 @@ abstract class FlysystemData implements Stringable, Arrayable, IteratorAggregate
     
     public function __get(string $name)
     {
-        return match ($name){
+        return match ($name) {
             'location' => $this->location,
             default => null
         };
