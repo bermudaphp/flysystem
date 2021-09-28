@@ -193,7 +193,7 @@ final class Directory extends FlysystemData implements Countable
     /**
      * @param string $path
      * @param callable|null $filter
-     * @return array
+     * @return array<File|Directory>
      * @throws FilesystemException
      */
     public function listContents(string $path = '/', callable $filter = null): array
