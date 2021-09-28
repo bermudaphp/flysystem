@@ -8,6 +8,8 @@ use League\Flysystem\FilesystemException;
 
 final class Directory extends FlysystemData implements Countable
 {
+    use Iterate;
+    
     /**
      * @return string
      */
