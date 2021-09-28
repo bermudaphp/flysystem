@@ -17,6 +17,7 @@ use League\Flysystem\{FilesystemOperator, FilesystemException};
  */
 final class Flysystem
 {
+    use Iterate;
     public function __construct(private ?FilesystemOperator     $operator = null,
                                 private ?StreamFactoryInterface $streamFactory = null,
                                 private ?ExtensionDetector      $detector = null
