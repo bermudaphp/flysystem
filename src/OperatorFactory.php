@@ -5,7 +5,7 @@ namespace Bermuda\Flysystem;
 use League\Flysystem\Filesystem;
 use League\Flysystem\Local\LocalFilesystemAdapter;
 
-final class FileSystemFactory
+final class OperatorFactory
 {
     public function __invoke(): Filesystem
     {
