@@ -2,12 +2,15 @@
 
 namespace Bermuda\Flysystem;
 
-use Bermuda\Arrayable;
-use Bermuda\String\Stringable;
 use Carbon\Carbon;
+use Bermuda\Arrayable;
 use IteratorAggregate;
+use Bermuda\String\Stringable;
 use League\Flysystem\FilesystemException;
 
+/**
+ * @property-read string location
+ */
 abstract class FlysystemData implements Stringable, Arrayable, IteratorAggregate
 {
     protected Location $location;
@@ -30,6 +33,14 @@ abstract class FlysystemData implements Stringable, Arrayable, IteratorAggregate
         return $this->path === null ?
             $this->path = $this->location->up()
             : $this->path;
+    }
+    
+    public function __get(string $name)
+    {
+        return match ($name){
+            'location' => $this->location,
+            default => null
+        };
     }
 
     abstract public function getSize(): int;
