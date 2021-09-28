@@ -24,9 +24,6 @@ final class Directory extends FlysystemData implements Countable
     public function merge(array $directories, bool $deleteMerged = false): self
     {
         foreach ($directories as $directory) {
-            /**
-             * @var File|self $flysystemData
-             */
             foreach ($directory as $flysystemData) {
                 $flysystemData->copy($this->location, true);
             }
@@ -217,13 +214,13 @@ final class Directory extends FlysystemData implements Countable
     }
 
     /**
-     * @return Generator
+     * @return iterable<File|Directory>
      * @throws FilesystemException
      */
     public function getIterator(): Generator
     {
-        foreach ($this->listContents() as $flysystemData) {
-            yield $flysystemData;
+        foreach ($this->listContents() as $file) {
+            yield $file;
         }
     }
 
@@ -258,7 +255,7 @@ final class Directory extends FlysystemData implements Countable
     }
 
     /**
-     * @return array
+     * @return array<File|Directory>
      * @throws FilesystemException
      */
     public function toArray(): array
