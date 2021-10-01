@@ -43,7 +43,10 @@ abstract class AbstractFile implements Stringable, Arrayable, IteratorAggregate
         };
     }
 
-    abstract public function getSize(): int;
+    public function getSize(): int
+    {
+        return $this->flysystem->filesize($this->location);
+    }
 
     /**
      * @return int
