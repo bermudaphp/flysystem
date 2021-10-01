@@ -1,6 +1,6 @@
 <?php
 
-namespace Bermuda\Flysystem\Exceptions;
+namespace Bermuda\Flysystem;
 
 final class NoSuchFile extends \RuntimeException
 {
