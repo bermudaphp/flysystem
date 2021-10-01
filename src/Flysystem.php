@@ -5,7 +5,7 @@ namespace Bermuda\Flysystem;
 use finfo;
 use Carbon\Carbon;
 use BadMethodCallException;
-use Bermuda\String\Stringy;
+use function Bermuda\String\{str_start_with, str_slice, str_before}
 use Bermuda\Detector\{ExtensionDetector, FinfoDetector};
 use League\Flysystem\{
     DirectoryAttributes,
@@ -18,7 +18,6 @@ use League\Flysystem\{
 
 /**
  * @mixin FilesystemOperator
- * @mixin StreamFactoryInterface
  */
 final class Flysystem
 {
@@ -36,12 +35,8 @@ final class Flysystem
             return call_user_func_array([$this->operator, $name], $arguments);
         }
 
-        if (method_exists($this->streamFactory, $name)) {
-            return call_user_func_array([$this->streamFactory, $name], $arguments);
-        }
-        
-        if (($stringy = new Stringy($name))->start(2)->equals('is')) {
-            return $this->isFile($arguments[0], $stringy->slice(2));
+        if (str_start_with('is')) {
+            return $this->isFile($arguments[0], str_slice(2));
         }
 
         throw new BadMethodCallException(
@@ -165,7 +160,7 @@ final class Flysystem
         $result = $this->detactor->detectExtension($content);
 
         if (str_contains($result, '/')) {
-            return (new Stringy($result))->before('/');
+            return str_before('/');
         }
 
         return $result;
