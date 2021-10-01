@@ -2,19 +2,30 @@
 
 namespace Bermuda\Flysystem;
 
-use RuntimeException;
-use Bermuda\String\StringHelper;
 use Bermuda\Iterator\StreamIterator;
+use Bermuda\String\StringHelper;
 use League\Flysystem\FilesystemException;
 use Psr\Http\Message\StreamInterface;
+use RuntimeException;
+use function error_get_last;
+use function feof;
+use function fseek;
+use function ftell;
+use function fwrite;
+use function stream_get_contents;
+use function stream_get_meta_data;
+use function var_export;
+use const SEEK_CUR;
 
 class File extends AbstractFile implements StreamInterface
 {
     /**
      * @var resource
      */
-    private $fileHandler = null;
-    private ?StreamInterface $stream = null;
+    private $fh = null;
+    private ?bool $isWritable = null;
+    private ?bool $isSeekable = null;
+    private ?bool $isReadable = null;
 
     private ?string $extension = null;
     private ?string $mimeType = null;
@@ -23,12 +34,38 @@ class File extends AbstractFile implements StreamInterface
      * @param string $filename
      * @param Flysystem $flysystem
      * @param int $bytesPerIteration
+     * @throws FilesystemException
      */
     private function __construct(string      $filename, Flysystem $flysystem,
                                  private int $bytesPerIteration = 1024
     )
     {
         parent::__construct($filename, $flysystem);
+        $this->setFh();
+    }
+
+    /**
+     * @throws FilesystemException
+     */
+    private function setFh(): void
+    {
+        if ($this->fh == null) {
+            $this->fh = $this->flysystem->readStream($this->location);
+            $meta = stream_get_meta_data($this->fh);
+            $this->isSeekable = $meta['seekable'] && 0 === fseek($this->fh, 0, SEEK_CUR);
+
+            $this->isReadable = match ($meta['mode']) {
+                'r', 'w+', 'r+', 'x+', 'c+', 'rb', 'w+b', 'r+b', 'x+b',
+                'c+b', 'rt', 'w+t', 'r+t', 'x+t', 'c+t', 'a+' => true,
+                default => false
+            };
+
+            $this->isWritable = match ($meta['mode']) {
+                'w', 'w+', 'rw', 'r+', 'x+', 'c+', 'wb', 'w+b', 'r+b',
+                'x+b', 'c+b', 'w+t', 'r+t', 'x+t', 'c+t', 'a', 'a+' => true,
+                default => false
+            };
+        }
     }
 
     /**
@@ -40,6 +77,7 @@ class File extends AbstractFile implements StreamInterface
     }
 
     /**
+     * @param int|null $bytes
      * @return int
      */
     public function bytesPerIteration(?int $bytes = null): int
@@ -52,67 +90,34 @@ class File extends AbstractFile implements StreamInterface
     }
 
     /**
-     * @inerhitDoc
+     * @param string $string
+     * @return int
+     * @throws RuntimeException
      */
     final public function write($string): int
     {
-        return $this->getStream()->write($string);
-    }
+        $this->isDetached();
 
-    private function getStream(): StreamInterface
-    {
-        if ($this->stream == null) {
-            $handler = $this->getFileHandler();
-            $this->stream = $this->flysystem->getStreamFactory()->createStreamFromResource($handler);
+        if (!$this->isWritable) {
+            throw new RuntimeException('Cannot write to a non-writable file');
         }
 
-        return $this->stream;
-    }
-
-    /**
-     * @return resource
-     * @throws FilesystemException
-     */
-    final public function getFileHandler()
-    {
-        if ($this->fileHandler == null) {
-            $this->fileHandler = $this->flysystem->getOperator()->readStream($this->location);
+        if (($length = @fwrite($this->fh, $string)) === false) {
+            throw new RuntimeException('Unable to write to file: ' . (error_get_last()['message'] ?? ''));
         }
 
-        return $this->fileHandler;
+        return $length;
     }
 
-    /**
-     * @return string
-     */
-    final public function getMimeType(): string
+    private function isDetached(): void
     {
-        if ($this->mimeType == null) {
-            return $this->mimeType = $this->flysystem->mimeType($this->location);
+        if ($this->fh === null) {
+            throw new RuntimeException('File is detached');
         }
-
-        return $this->mimeType;
     }
 
     /**
-     * @return int
-     * @throws FilesystemException
-     */
-    final public function getSize(): int
-    {
-        return $this->flysystem->getOperator()->fileSize($this->location);
-    }
-
-    /**
-     * @return string
-     * @throws FilesystemException
-     */
-    final public function getContents(): string
-    {
-        return $this->flysystem->getOperator()->read($this->location);
-    }
-
-    /**
+     * @param int|null $bytesPerIteration
      * @return StreamIterator
      */
     final public function getIterator(int $bytesPerIteration = null): StreamIterator
@@ -136,15 +141,13 @@ class File extends AbstractFile implements StreamInterface
         $location = $this->location->up()->append($name);
 
         $this->move($location);
-        $this->location = $location;
         $this->name = $name;
-        
+
         return $this;
     }
 
     /**
      * @return string
-     * @throws FilesystemException
      */
     final public function getExtension(): string
     {
@@ -165,17 +168,16 @@ class File extends AbstractFile implements StreamInterface
         $destination = new Location($destination);
 
         if ($this->flysystem->isDirectory($destination)) {
-            $destination = $destination->append($this->getName());
+            $destination = $destination->append($this->basename());
         }
 
-        $this->flysystem->getOperator()->move($this->location, $destination);
+        $this->flysystem->move($this->location, $destination);
         $this->location = $destination;
 
-        $this->fileHandler = null;
-        $this->stream = null;
+        $this->setFh();
         $this->name = null;
         $this->path = null;
-        
+
         return $this;
     }
 
@@ -189,10 +191,11 @@ class File extends AbstractFile implements StreamInterface
 
     /**
      * @return Directory
+     * @throws FilesystemException
      */
-    public function getDirictory(): Directory
+    public function getDirectory(): Directory
     {
-        return $this->flysystem->openDirectory($this->location->up());
+        return $this->flysystem->open($this->location->up());
     }
 
     /**
@@ -200,12 +203,13 @@ class File extends AbstractFile implements StreamInterface
      */
     final public function delete(): void
     {
-        $this->flysystem->getOperator()->delete($this->location);
+        $this->flysystem->delete($this->location);
     }
 
     /**
      * @param string $destination
      * @param bool $destinationIsDir
+     * @return static
      * @throws FilesystemException
      */
     final public function copy(string $destination, bool $destinationIsDir = false): self
@@ -213,7 +217,7 @@ class File extends AbstractFile implements StreamInterface
         $destination = new Location($destination);
 
         if ($destinationIsDir) {
-            $destination = $destination->append($this->getName());
+            $destination = $destination->append($this->basename());
         }
 
         return self::create($destination, (string)$this, $this->flysystem, $this->bytesPerIteration);
@@ -237,14 +241,14 @@ class File extends AbstractFile implements StreamInterface
             $extension = $system->extension($content, true);
             $filename = StringHelper::filename($extension);
 
-            $system->getOperator()->write($filename, $content);
+            $system->write($filename, $content);
             return self::open($filename, $system, $bytesPerIteration);
         }
 
         try {
             return self::open($filename, $system, $bytesPerIteration);
         } catch (NoSuchFile) {
-            $system->getOperator()->write($filename, $content);
+            $system->write($filename, $content);
             return self::open($filename, $system, $bytesPerIteration);
         }
     }
@@ -289,51 +293,28 @@ class File extends AbstractFile implements StreamInterface
     }
 
     /**
-     * @inerhitDoc
+     * @return string
+     */
+    final public function getMimeType(): string
+    {
+        if ($this->mimeType == null) {
+            return $this->mimeType = $this->flysystem->mimeType($this->location);
+        }
+
+        return $this->mimeType;
+    }
+
+    /**
+     * @return string
+     * @throws FilesystemException
      */
     final public function __toString(): string
     {
-        return $this->flysystem->getOperator()->read($this->location);
-    }
+        if ($this->isSeekable) {
+            $this->seek(0);
+        }
 
-    /**
-     * @inerhitDoc
-     */
-    final public function close(): void
-    {
-        $this->getStream()->close();
-    }
-
-    /**
-     * @inerhitDoc
-     */
-    final public function detach()
-    {
-        return $this->getStream()->detach();
-    }
-
-    /**
-     * @inerhitDoc
-     */
-    final public function tell(): int
-    {
-        return $this->getStream()->tell();
-    }
-
-    /**
-     * @inerhitDoc
-     */
-    final public function eof(): bool
-    {
-        return $this->getStream()->eof();
-    }
-
-    /**
-     * @inerhitDoc
-     */
-    final public function isSeekable(): bool
-    {
-        return $this->getStream()->isSeekable();
+        return $this->getContents();
     }
 
     /**
@@ -341,7 +322,85 @@ class File extends AbstractFile implements StreamInterface
      */
     final public function seek($offset, $whence = SEEK_SET): void
     {
-        $this->getStream()->seek($offset, $whence);
+        $this->isDetached();
+
+        if (!$this->isSeekable) {
+            throw new RuntimeException('File is not seekable');
+        }
+
+        if (fseek($this->fh, $offset, $whence) === -1) {
+            throw new RuntimeException('Unable to seek to file position "' . $offset . '" with whence ' . var_export($whence, true));
+        }
+    }
+
+    /**
+     * @return string
+     * @throws RuntimeException
+     */
+    final public function getContents(): string
+    {
+        $this->isDetached();
+
+        if (($contents = @stream_get_contents($this->fh)) === false) {
+            throw new RuntimeException('Unable to read file contents: ' . (error_get_last()['message'] ?? ''));
+        }
+
+        return $contents;
+    }
+
+    /**
+     * @inerhitDoc
+     */
+    final public function close(): void
+    {
+        if ($this->fh !== null) {
+            fclose($this->fh);
+            $this->detach();
+        }
+    }
+
+    /**
+     * @inerhitDoc
+     */
+    final public function detach()
+    {
+        $fh = $this->fh;
+        $this->fh =
+        $this->isReadable =
+        $this->isWritable =
+        $this->isSeekable = null;
+
+        return $fh;
+    }
+
+    /**
+     * @inerhitDoc
+     */
+    final public function tell(): int
+    {
+        $this->isDetached();
+
+        if (($pos = @ftell($this->fh)) === false) {
+            throw new RuntimeException('Unable to determine stream position: ' . (error_get_last()['message'] ?? ''));
+        }
+
+        return $pos;
+    }
+
+    /**
+     * @inerhitDoc
+     */
+    final public function eof(): bool
+    {
+        return $this->fh === null || feof($this->fh);
+    }
+
+    /**
+     * @inerhitDoc
+     */
+    final public function isSeekable(): bool
+    {
+        return $this->isSeekable;
     }
 
     /**
@@ -349,7 +408,7 @@ class File extends AbstractFile implements StreamInterface
      */
     final public function rewind(): void
     {
-        $this->getStream()->rewind();
+        $this->seek(0);
     }
 
     /**
@@ -357,7 +416,7 @@ class File extends AbstractFile implements StreamInterface
      */
     final public function isWritable(): bool
     {
-        return $this->getStream()->isWritable();
+        return $this->isWritable;
     }
 
     /**
@@ -365,7 +424,7 @@ class File extends AbstractFile implements StreamInterface
      */
     final public function isReadable(): bool
     {
-        return $this->getStream()->isReadable();
+        return $this->isReadable;
     }
 
     /**
@@ -373,7 +432,17 @@ class File extends AbstractFile implements StreamInterface
      */
     final public function read($length): string
     {
-        return $this->getStream()->read($length);
+        $this->isDetached();
+
+        if (!$this->isWritable) {
+            throw new RuntimeException('Cannot write to a non-writable file');
+        }
+
+        if ($length = @fwrite($this->fh, $length) === false) {
+            throw new RuntimeException('Unable to write to file: ' . (error_get_last()['message'] ?? ''));
+        }
+
+        return $length;
     }
 
     /**
@@ -381,6 +450,11 @@ class File extends AbstractFile implements StreamInterface
      */
     final public function getMetadata($key = null)
     {
-        return $this->getStream()->getMetadata($key);
+        if ($this->fh === null) {
+            return $key ? null : [];
+        }
+
+        $meta = stream_get_meta_data($this->fh);
+        return $key === null ? $meta : $meta[$key] ?? null;
     }
 }
