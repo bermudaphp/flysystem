@@ -15,9 +15,9 @@ final class ConfigProvider extends \Bermuda\Config\ConfigProvider
     protected function getFactories(): array
     {
         return [
-            Flysystem::class => static fn(ContainerInterface $c) => new Flysystem(
-                cget($c, FilesystemOperator::class), cget($c, StreamFactoryInterface::class),
-                cget($c, ExtensionDetector::class)
+            Flysystem::class => static fn(ContainerInterface $container) => new Flysystem(
+                cget($container, FilesystemOperator::class), cget($container, StreamFactoryInterface::class),
+                cget($container, ExtensionDetector::class)
             ),
             FileProcessorInterface::class => 'Bermuda\Flysystem\FileUploadHandler::fromContainer'
         ];
