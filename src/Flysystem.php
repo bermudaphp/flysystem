@@ -69,12 +69,7 @@ final class Flysystem
     public function fileSize(string $location = '/'): int
     {
         if ($this->isDirectory($location)) {
-            $size = 0;
-            foreach ($this->operator->listContents($location) as $storageAttributes) {
-                $size += $this->doFileSize($storageAttributes);
-            }
-            
-            return $size;
+            return $this->doFileSize(new DirectoryAttributes($location));
         }
 
         return $this->operator->fileSize($location);
