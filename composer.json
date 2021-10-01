@@ -12,9 +12,10 @@
         "bermudaphp/stringy": "^1.2",
         "bermudaphp/arrayable": "^1.1.1",
         "nesbot/carbon": "^2.52.0",
+        "psr/http-message": "^1.0.1",
         "league/flysystem": "^2.2.3",
-        "nyholm/psr7": "^1.4.1",
         "bermudaphp/utils": "^1.2.2",
+        "bermudaphp/detector": "^1.0",
         "bermudaphp/config": "^1.0"
     }
 }
