@@ -4,11 +4,9 @@ namespace Bermuda\Flysystem;
 
 use RuntimeException;
 use Bermuda\String\StringHelper;
-use Bermuda\Utils\Header;
 use Bermuda\Iterator\StreamIterator;
 use League\Flysystem\FilesystemException;
-use Bermuda\Utils\Headers\ContentDisposition;
-use Psr\Http\Message\{ResponseInterface, StreamInterface};
+use Psr\Http\Message\StreamInterface;
 
 class File extends AbstractFile implements StreamInterface
 {
