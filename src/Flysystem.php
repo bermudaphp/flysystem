@@ -6,9 +6,7 @@ use finfo;
 use Carbon\Carbon;
 use BadMethodCallException;
 use Bermuda\String\Stringy;
-use Nyholm\Psr7\Factory\Psr17Factory;
 use Bermuda\Detector\{ExtensionDetector, FinfoDetector};
-use Psr\Http\Message\StreamFactoryInterface;
 use League\Flysystem\{
     DirectoryAttributes,
     DirectoryListing,
@@ -25,12 +23,10 @@ use League\Flysystem\{
 final class Flysystem
 {
     public function __construct(private ?FilesystemOperator     $operator = null,
-                                private ?StreamFactoryInterface $streamFactory = null,
                                 private ?ExtensionDetector      $detector = null
     )
     {
         $this->operator = $operator ?? OperatorFactory::makeLocal();
-        $this->streamFactory = $this->streamFactory ?? new Psr17Factory();
         $this->detector = $detector ?? new FinfoDetector();
     }
 
@@ -104,14 +100,6 @@ final class Flysystem
     public function mimeType(string $location): string
     {
         return $this->operator->mimeType($location);
-    }
-
-    /**
-     * @return FilesystemOperator
-     */
-    public function getOperator(): FilesystemOperator
-    {
-        return $this->operator;
     }
 
     /**
@@ -189,7 +177,7 @@ final class Flysystem
      * @return File|Directory
      * @throws FilesystemException
      */
-    public function create(string $filename, ?string $content = null): File
+    public function create(string $filename, ?string $content = null): File|Directory
     {
         return $content !== null ? File::create($filename, $content, $this)
             : Directory::create($filename, $this);
