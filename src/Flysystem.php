@@ -191,12 +191,12 @@ final class Flysystem
     }
 
     /**
-     * @param string|null $filename
+     * @param string $filename
      * @param string $content
      * @return File|Directory
      * @throws FilesystemException
      */
-    public function create(?string $filename = null, ?string $content = null): File
+    public function create(string $filename, ?string $content = null): File
     {
         return $content !== null ? File::create($filename, $content, $this)
             : Directory::create($filename, $this);
