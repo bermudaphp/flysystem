@@ -151,7 +151,7 @@ class File extends AbstractFile implements StreamInterface
     final public function getExtension(): string
     {
         if ($this->extension == null) {
-            return $this->extension = $this->flysystem->extension($this->location);
+            return $this->extension = $this->flysystem->fileExtension($this->location);
         }
 
         return $this->extension;
@@ -218,7 +218,7 @@ class File extends AbstractFile implements StreamInterface
             $destination = $destination->append($this->getName());
         }
 
-        return self::create($destination, $this->getContents(), $this->flysystem, $this->bytesPerIteration);
+        return self::create($destination, (string)$this, $this->flysystem, $this->bytesPerIteration);
     }
 
     /**
@@ -245,7 +245,7 @@ class File extends AbstractFile implements StreamInterface
 
         try {
             return self::open($filename, $system, $bytesPerIteration);
-        } catch (Exceptions\NoSuchFile) {
+        } catch (NoSuchFile) {
             $system->getOperator()->write($filename, $content);
             return self::open($filename, $system, $bytesPerIteration);
         }
@@ -265,7 +265,7 @@ class File extends AbstractFile implements StreamInterface
     ): self
     {
         if (!($system = self::system($system))->isFile($filename)) {
-            throw new Exceptions\NoSuchFile($filename);
+            throw new NoSuchFile($filename);
         }
 
         if ($system->isImage($filename)) {
