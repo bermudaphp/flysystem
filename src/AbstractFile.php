@@ -11,7 +11,7 @@ use League\Flysystem\FilesystemException;
 /**
  * @property-read string location
  */
-abstract class FlysystemData implements Stringable, Arrayable, IteratorAggregate
+abstract class AbstractFile implements Stringable, Arrayable, IteratorAggregate
 {
     protected Location $location;
 
