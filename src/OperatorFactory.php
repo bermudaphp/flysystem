@@ -9,7 +9,7 @@ final class OperatorFactory
 {
     public function __invoke(): Filesystem
     {
-        return self::makeSystem();
+        return self::makeLocal();
     }
 
     /**
