@@ -5,7 +5,7 @@ namespace Bermuda\Flysystem;
 use finfo;
 use Carbon\Carbon;
 use BadMethodCallException;
-use Bermuda\String\{Str, Stringy};
+use Bermuda\String\Stringy;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Bermuda\Detector\{ExtensionDetector, FinfoDetector};
 use Psr\Http\Message\StreamFactoryInterface;
@@ -76,12 +76,31 @@ final class Flysystem
      */
     public function fileSize(string $location = '/'): int
     {
-        if ($this->isDirectory($location))
-        {
-            return $this->openDirectory($location)->getSize();
+        if ($this->isDirectory($location)) {
+            $size = 0;
+            foreach ($this->operator->listContents($location) as $storageAttributes) {
+                $size += $this->doFileSize($storageAttributes);
+            }
+            
+            return $size;
         }
 
         return $this->operator->fileSize($location);
+    }
+
+    private function doFileSize(StorageAttributes $attributes): int
+    {
+        if ($attributes->isFile()) {
+            return $attributes instanceof FileAttributes ? $attributes->fileSize()
+                : $this->operator->fileSize($attributes->path());
+        }
+
+        $size = 0;
+        foreach ($this->operator->listContents($attributes->path()) as $content) {
+            $size += $this->doFileSize($content);
+        }
+
+        return $size;
     }
 
     /**
@@ -161,28 +180,6 @@ final class Flysystem
     }
 
     /**
-     * @param string|null $filename
-     * @param string $content
-     * @return File
-     * @throws FilesystemException
-     * @throws Exceptions\NoSuchFile
-     */
-    public function openFile(string $filename): File
-    {
-        return File::open($filename, $this);
-    }
-
-    /**
-     * @param string $location
-     * @return Directory
-     * @throws Exceptions\NoSuchDirectory
-     */
-    public function openDirectory(string $location): Directory
-    {
-        return Directory::open($location, $this);
-    }
-
-    /**
      * @param string $location
      * @return File[]
      * @throws FilesystemException
@@ -238,22 +235,13 @@ final class Flysystem
     /**
      * @param string|null $filename
      * @param string $content
-     * @return File
+     * @return File|Directory
      * @throws FilesystemException
      */
-    public function createFile(?string $filename = null, string $content = ''): File
+    public function create(?string $filename = null, ?string $content = null): File
     {
-        return File::create($filename, $content, $this);
-    }
-
-    /**
-     * @param string $location
-     * @return Directory
-     * @throws FilesystemException
-     */
-    public function createDirectory(string $location): Directory
-    {
-        return Directory::create($location, $this);
+        return $content !== null ? File::create($filename, $content, $this)
+            : Directory::create($filename, $this);
     }
 
     /**
@@ -267,10 +255,10 @@ final class Flysystem
         $list = [];
 
         foreach ($this->operator->listContents($location) as $listContent) {
-            $flysystemData = $this->open($listContent->path());
+            $file = $this->open($listContent->path());
 
-            if ($filter === null || $filter($flysystemData)) {
-                $list[] = $flysystemData;
+            if ($filter === null || true === $filter($file)) {
+                $list[] = $file;
             }
         }
 
@@ -278,14 +266,14 @@ final class Flysystem
     }
 
     /**
-     * @param string $path
+     * @param string $location
      * @return bool
      * @throws FilesystemException
      */
-    public function exists(string $path): bool
+    public function exists(string $location): bool
     {
-        return $this->operator->fileExists($path)
-            || $this->isDirectory($path);
+        return $this->operator->fileExists($location)
+            || $this->isDirectory($location);
     }
 
     /**
