@@ -36,16 +36,16 @@ final class Flysystem
 
     public function __call(string $name, array $arguments)
     {
-        if (($stringy = new Stringy($name))->start(2)->equals('is')) {
-            return $this->isFile($arguments[0], $stringy->slice(2));
-        }
-
         if (method_exists($this->operator, $name)) {
             return call_user_func_array([$this->operator, $name], $arguments);
         }
 
         if (method_exists($this->streamFactory, $name)) {
             return call_user_func_array([$this->streamFactory, $name], $arguments);
+        }
+        
+        if (($stringy = new Stringy($name))->start(2)->equals('is')) {
+            return $this->isFile($arguments[0], $stringy->slice(2));
         }
 
         throw new BadMethodCallException(
