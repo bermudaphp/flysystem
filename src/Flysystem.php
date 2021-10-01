@@ -5,7 +5,7 @@ namespace Bermuda\Flysystem;
 use finfo;
 use Carbon\Carbon;
 use BadMethodCallException;
-use function Bermuda\String\{str_start_with, str_slice, str_before}
+use function Bermuda\String\{str_starts_with, str_slice, str_before}
 use Bermuda\Detector\{ExtensionDetector, FinfoDetector};
 use League\Flysystem\{
     DirectoryAttributes,
