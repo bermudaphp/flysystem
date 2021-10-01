@@ -8,8 +8,6 @@ use League\Flysystem\FilesystemException;
 
 final class Directory extends FlysystemData implements Countable
 {
-    use Iterate;
-    
     /**
      * @return string
      */
@@ -225,28 +223,20 @@ final class Directory extends FlysystemData implements Countable
             yield $file;
         }
     }
-
+    
     /**
      * @param string $filename
-     * @param string $content
-     * @return File
+     * @param ?string $content
+     * @return File|self
      * @throws FilesystemException
      */
-    public function addNewFile(string $filename, string $content): File
+    public function createF(string $location, ?string $content = null): File|self 
     {
-        return File::create($this->location->append($filename), $content, $this->flysystem);
+        $location = $this->location->append($location);
+        return $content !== null ? File::create($location, $content, $this->flysystem)
+            : self::create($location, $this->flysystem);
     }
-
-    /**
-     * @param string $location
-     * @return $this
-     * @throws FilesystemException
-     */
-    public function addNewDirectory(string $location): self
-    {
-        return self::create($this->location->append($location), $this->flysystem);
-    }
-
+    
     /**
      * @return array
      * @throws FilesystemException
