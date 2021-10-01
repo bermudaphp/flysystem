@@ -54,7 +54,7 @@ final class Directory extends FlysystemData implements Countable
     {
         $directory = self::create($destination, $this->flysystem);
         foreach ($this as $file) {
-            if ($directory->getName() !== $file->getName()) {
+            if ($directory->basename() !== $file->basename()) {
                 $directory->add($file);
             }
         }
@@ -86,9 +86,7 @@ final class Directory extends FlysystemData implements Countable
         try {
             return self::open($location, $system);
         } catch (NoSuchFile) {
-            ($system = self::system($system))->getOperator()
-                ->create($location);
-            
+            ($system = self::system($system))->create($location);
             return self::open($location, $system);
         }
     }
@@ -117,7 +115,7 @@ final class Directory extends FlysystemData implements Countable
     public function add(File|self $file): void
     {
         if ($file instanceof self) {
-            $file->copy($this->location->append($file->getName()));
+            $file->copy($this->location->append($file->basename()));
         } else {
             $file->copy($this->location, true);
         }
@@ -128,7 +126,7 @@ final class Directory extends FlysystemData implements Countable
      */
     public function delete(): void
     {
-        $this->flysystem->getOperator()->deleteDirectory($this->location);
+        $this->flysystem->deleteDirectory($this->location);
     }
 
     // public function isRoot(): bool{}
@@ -149,7 +147,7 @@ final class Directory extends FlysystemData implements Countable
      */
     public function isEmpty(): bool
     {
-        foreach ($this->flysystem->getOperator()->listContents($this->location) as $i) {
+        foreach ($this->flysystem->listContents($this->location) as $i) {
             return false;
         }
 
