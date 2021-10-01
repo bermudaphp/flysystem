@@ -168,7 +168,7 @@ final class Flysystem
      * @throws FilesystemException
      * @throws Exceptions\NoSuchFile
      */
-    public function openFile(?string $filename = null): File
+    public function openFile(string $filename): File
     {
         return File::open($filename, $this);
     }
