@@ -207,7 +207,6 @@ final class Flysystem
 
         foreach ($this->operator->listContents($location) as $listContent) {
             $file = $this->open($listContent->path());
-
             if ($filter === null || true === $filter($file)) {
                 $list[] = $file;
             }
