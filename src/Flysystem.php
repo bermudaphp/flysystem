@@ -164,7 +164,7 @@ final class Flysystem
      * @throws FilesystemException
      * @throws Exceptions\NoSuchFile|Exceptions\NoSuchDirectory
      */
-    public function open(string $location): File|Directory|null
+    public function open(string $location): File|Directory
     {
         try {
             return $this->openFile($location);
@@ -180,26 +180,6 @@ final class Flysystem
     }
 
     /**
-     * @param string $location
-     * @return File[]
-     * @throws FilesystemException
-     */
-    public function getFiles(string $location): array
-    {
-        return $this->openDirectory($location)->getFiles();
-    }
-
-    /**
-     * @param string $location
-     * @return array
-     * @throws FilesystemException
-     */
-    public function getDirectories(string $location): array
-    {
-        return $this->openDirectory($location)->getChildes();
-    }
-
-    /**
      * @return StreamFactoryInterface
      */
     public function getStreamFactory(): StreamFactoryInterface
@@ -211,7 +191,7 @@ final class Flysystem
      * @param string $filename
      * @return string
      */
-    public function extension(string $filename): string
+    public function fileExtension(string $filename): string
     {
         $content = $this->operator->read($filename);
         $result = $this->detactor->detectExtension($content);
