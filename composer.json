@@ -8,14 +8,14 @@
     },
     "require": {
         "php": "^8.0.0",
-        "bermudaphp/iterator": "^1.0",
-        "bermudaphp/stringy": "^2.0.1",
+        "bermudaphp/iterator": "^1.1.8",
+        "bermudaphp/stringy": "^2.0",
         "bermudaphp/arrayable": "^1.1.1",
         "nesbot/carbon": "^2.52.0",
         "psr/http-message": "^1.0.1",
         "league/flysystem": "^2.2.3",
-        "webmozart/path-util": "^2.3.0",
+        "webmozart/path-util": "^2.3",
         "bermudaphp/detector": "^1.0",
-        "bermudaphp/config": "^1.0"
+        "bermudaphp/config": "^1.1"
     }
 }
