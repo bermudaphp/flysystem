@@ -180,14 +180,6 @@ final class Flysystem
     }
 
     /**
-     * @return StreamFactoryInterface
-     */
-    public function getStreamFactory(): StreamFactoryInterface
-    {
-        return $this->streamFactory;
-    }
-
-    /**
      * @param string $filename
      * @return string
      */
