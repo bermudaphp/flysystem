@@ -9,7 +9,14 @@ use Bermuda\String\Stringy;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Bermuda\Detector\{ExtensionDetector, FinfoDetector};
 use Psr\Http\Message\StreamFactoryInterface;
-use League\Flysystem\{FilesystemOperator, FilesystemException};
+use League\Flysystem\{
+    DirectoryAttributes,
+    DirectoryListing,
+    FileAttributes,
+    FilesystemOperator,
+    FilesystemException,
+    StorageAttributes
+};
 
 /**
  * @mixin FilesystemOperator
