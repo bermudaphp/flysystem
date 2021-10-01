@@ -27,14 +27,6 @@ final class Flysystem
         $this->detector = $detector ?? new FinfoDetector();
     }
 
-    /**
-     * @return self
-     */
-    public static function fromLocal(): self
-    {
-        return new Flysystem;
-    }
-
     public function __call(string $name, array $arguments)
     {
         if (($stringy = new Stringy($name))->start(2)->equals('is')) {
