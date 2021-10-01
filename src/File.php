@@ -10,7 +10,7 @@ use League\Flysystem\FilesystemException;
 use Bermuda\Utils\Headers\ContentDisposition;
 use Psr\Http\Message\{ResponseInterface, StreamInterface};
 
-class File extends FlysystemData implements StreamInterface
+class File extends AbstractFile implements StreamInterface
 {
     /**
      * @var resource
