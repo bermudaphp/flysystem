@@ -154,7 +154,7 @@ final class Flysystem
      * @param string $location
      * @return File|Directory|null
      * @throws FilesystemException
-     * @throws Exceptions\NoSuchFile|Exceptions\NoSuchDirectory
+     * @throws NoSuchFile
      */
     public function open(string $location): File|Directory
     {
