@@ -9,7 +9,7 @@ use Bermuda\String\Stringable;
 use League\Flysystem\FilesystemException;
 
 /**
- * @property-read string location
+ * @property-read Location location
  */
 abstract class AbstractFile implements Stringable, Arrayable, IteratorAggregate
 {
