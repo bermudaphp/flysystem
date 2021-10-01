@@ -2,6 +2,11 @@
 
 namespace Bermuda\Flysystem;
 
+use League\Flysystem\FilesystemOperator;
+use Bermuda\Detector\ExtensionDetector;
+use Psr\Http\Message\StreamFactoryInterface;
+use function Bermuda\Config\cget;
+
 final class ConfigProvider extends \Bermuda\Config\ConfigProvider
 {
     /**
