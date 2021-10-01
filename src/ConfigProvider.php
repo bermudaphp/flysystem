@@ -4,7 +4,6 @@ namespace Bermuda\Flysystem;
 
 use League\Flysystem\FilesystemOperator;
 use Bermuda\Detector\ExtensionDetector;
-use Psr\Http\Message\StreamFactoryInterface;
 use function Bermuda\Config\cget;
 
 final class ConfigProvider extends \Bermuda\Config\ConfigProvider
@@ -16,10 +15,8 @@ final class ConfigProvider extends \Bermuda\Config\ConfigProvider
     {
         return [
             Flysystem::class => static fn(ContainerInterface $container) => new Flysystem(
-                cget($container, FilesystemOperator::class), cget($container, StreamFactoryInterface::class),
-                cget($container, ExtensionDetector::class)
-            ),
-            FileProcessorInterface::class => 'Bermuda\Flysystem\FileUploadHandler::fromContainer'
+                cget($container, FilesystemOperator::class), cget($container, ExtensionDetector::class)
+            )
         ];
     }
     
@@ -28,9 +25,6 @@ final class ConfigProvider extends \Bermuda\Config\ConfigProvider
      */
     protected function getAliases(): array
     {
-        return [
-            'fs' => Flysystem::class,
-            FileUploadHandler::class => FileProcessorInterface::class
-        ];
+        return ['fs' => Flysystem::class];
     }
 }
