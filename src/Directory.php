@@ -18,17 +18,17 @@ final class Directory extends FlysystemData implements Countable
 
     /**
      * @param self[] $directories
-     * @param bool $deleteMerged
+     * @param bool $deleteAfter
      * @throws FilesystemException
      */
-    public function merge(array $directories, bool $deleteMerged = false): self
+    public function merge(array $directories, bool $deleteAfter = false): self
     {
         foreach ($directories as $directory) {
-            foreach ($directory as $flysystemData) {
-                $flysystemData->copy($this->location, true);
+            foreach ($directory as $file) {
+                $file->copy($this->location, true);
             }
 
-            if ($deleteMerged) {
+            if ($deleteAfter) {
                 $directory->delete();
             }
         }
@@ -42,7 +42,7 @@ final class Directory extends FlysystemData implements Countable
             return null;
         }
 
-        return $this->flysystem->openDirectory($loc);
+        return $this->flysystem->open($loc);
     }
 
     /**
@@ -53,9 +53,9 @@ final class Directory extends FlysystemData implements Countable
     final public function copy(string $destination): self
     {
         $directory = self::create($destination, $this->flysystem);
-        foreach ($this as $flysystemData) {
-            if ($directory->getName() !== $flysystemData->getName()) {
-                $directory->add($flysystemData);
+        foreach ($this as $file) {
+            if ($directory->getName() !== $file->getName()) {
+                $directory->add($file);
             }
         }
 
@@ -85,9 +85,10 @@ final class Directory extends FlysystemData implements Countable
     {
         try {
             return self::open($location, $system);
-        } catch (Exceptions\NoSuchDirectory) {
+        } catch (NoSuchFile) {
             ($system = self::system($system))->getOperator()
-                ->createDirectory($location);
+                ->create($location);
+            
             return self::open($location, $system);
         }
     }
@@ -96,29 +97,29 @@ final class Directory extends FlysystemData implements Countable
      * @param string $location
      * @param Flysystem|null $system
      * @return self
-     * @throws Exceptions\NoSuchDirectory
+     * @throws NoSuchFile
      */
     public static function open(
         string $location, ?Flysystem $system = null
     ): self
     {
         if (!($system = self::system($system))->isDirectory($location)) {
-            throw new Exceptions\NoSuchDirectory($location);
+            throw new NoSuchFile($location);
         }
 
         return new self($location, $system);
     }
 
     /**
-     * @param File|Directory $flysystemData
+     * @param File|Directory $file
      * @throws FilesystemException
      */
-    public function add(File|self $flysystemData): void
+    public function add(File|self $file): void
     {
-        if ($flysystemData instanceof self) {
-            $flysystemData->copy($this->location->append($flysystemData->getName()));
+        if ($file instanceof self) {
+            $file->copy($this->location->append($file->getName()));
         } else {
-            $flysystemData->copy($this->location, true);
+            $file->copy($this->location, true);
         }
     }
 
@@ -131,20 +132,6 @@ final class Directory extends FlysystemData implements Countable
     }
 
     // public function isRoot(): bool{}
-
-    /**
-     * @return int
-     */
-    public function getSize(): int
-    {
-        $size = 0;
-
-        foreach ($this as $item) {
-            $size += $item->getSize();
-        }
-
-        return $size;
-    }
 
     /**
      * @param string $path
@@ -184,7 +171,7 @@ final class Directory extends FlysystemData implements Countable
      */
     public function getChildes(): array
     {
-        return $this->listContents('/', static fn(FlysystemData $v) => $v instanceof self);
+        return $this->listContents('/', static fn(AbstractFile $file) => $file instanceof self);
     }
 
     /**
