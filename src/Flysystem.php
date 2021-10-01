@@ -35,7 +35,7 @@ final class Flysystem
             return call_user_func_array([$this->operator, $name], $arguments);
         }
 
-        if (str_start_with('is')) {
+        if (str_start_with($name, 'is')) {
             return $this->isFile($arguments[0], str_slice(2));
         }
 
@@ -160,7 +160,7 @@ final class Flysystem
         $result = $this->detactor->detectExtension($content);
 
         if (str_contains($result, '/')) {
-            return str_before('/');
+            return str_before($result, '/');
         }
 
         return $result;
