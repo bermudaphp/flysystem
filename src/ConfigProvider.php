@@ -16,9 +16,8 @@ final class ConfigProvider extends \Bermuda\Config\ConfigProvider
     {
         return [
             Flysystem::class => static fn(ContainerInterface $c) => new Flysystem(
-                cget(FilesystemOperator::class),
-                cget(StreamFactoryInterface::class),
-                cget(ExtensionDetector::class)
+                cget($c, FilesystemOperator::class), cget($c, StreamFactoryInterface::class),
+                cget($c, ExtensionDetector::class)
             ),
             FileProcessorInterface::class => 'Bermuda\Flysystem\FileUploadHandler::fromContainer'
         ];
