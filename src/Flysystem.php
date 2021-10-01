@@ -29,7 +29,7 @@ final class Flysystem
                                 private ?ExtensionDetector      $detector = null
     )
     {
-        $this->operator = $operator ?? OperatorFactory::makeSystem();
+        $this->operator = $operator ?? OperatorFactory::makeLocal();
         $this->streamFactory = $this->streamFactory ?? new Psr17Factory();
         $this->detector = $detector ?? new FinfoDetector();
     }
