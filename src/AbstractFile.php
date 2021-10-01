@@ -62,7 +62,7 @@ abstract class AbstractFile implements Stringable, Arrayable, IteratorAggregate
     /**
      * @return string
      */
-    final public function getName(): string
+    final public function basename(): string
     {
         return $this->name === null ?
             $this->name = $this->location->basename()
