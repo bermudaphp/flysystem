@@ -16,7 +16,7 @@ final class OperatorFactory
      * @param string|null $path
      * @return Filesystem
      */
-    public static function makeSystem(string $path = null): Filesystem
+    public static function makeLocal(string $path = null): Filesystem
     {
         return new Filesystem(new LocalFilesystemAdapter($path ?? getcwd()));
     }
