@@ -54,8 +54,7 @@ abstract class AbstractFile implements Stringable, Arrayable, IteratorAggregate
      */
     final public function lastModified(bool $asCarbon = true): int|Carbon
     {
-        $timestamp = $this->flysystem->getOperator()
-            ->lastModified($this->location);
+        $timestamp = $this->flysystem->lastModified($this->location);
         return $asCarbon ? Carbon::createFromTimestamp($timestamp) : $timestamp;
     }
 
