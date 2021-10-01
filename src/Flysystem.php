@@ -183,15 +183,6 @@ final class Flysystem
 
     /**
      * @param string $filename
-     * @return bool
-     */
-    public function isImage(string $filename): bool
-    {
-        return $this->isFile($filename, 'image');
-    }
-
-    /**
-     * @param string $filename
      * @param string $content
      * @return File|Directory
      * @throws FilesystemException
