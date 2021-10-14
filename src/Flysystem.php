@@ -38,7 +38,7 @@ final class Flysystem
         }
 
         if (str_starts_with($name, 'is')) {
-            return $this->isFile($arguments[0], str_slice(2));
+            return $this->isFile($arguments[0], str_slice($name, 2));
         }
 
         throw new BadMethodCallException(
