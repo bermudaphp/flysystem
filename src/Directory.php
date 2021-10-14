@@ -6,7 +6,7 @@ use Countable;
 use Generator;
 use League\Flysystem\FilesystemException;
 
-final class Directory extends FlysystemData implements Countable
+final class Directory extends AbstractFile implements Countable
 {
     /**
      * @return string
