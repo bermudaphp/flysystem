@@ -215,11 +215,20 @@ final class Directory extends FlysystemData implements Countable
      * @return File|self
      * @throws FilesystemException
      */
-    public function createF(string $location, ?string $content = null): File|self 
+    public function createFile(string $location, string $content = ''): File
     {
-        $location = $this->location->append($location);
-        return $content !== null ? File::create($location, $content, $this->flysystem)
-            : self::create($location, $this->flysystem);
+        return File::create($this->location->append($location), $content, $this->flysystem);
+    }
+
+    /**
+     * @param string $filename
+     * @param ?string $content
+     * @return File|self
+     * @throws FilesystemException
+     */
+    public function createDirectory(string $location): self
+    {
+        return self::create($this->location->append($location), $this->flysystem);
     }
     
     /**
