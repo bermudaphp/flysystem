@@ -5,8 +5,8 @@ namespace Bermuda\Flysystem;
 use finfo;
 use Carbon\Carbon;
 use BadMethodCallException;
-use function Bermuda\String\{str_starts_with, str_slice, str_before}
-use Bermuda\Detector\{ExtensionDetector, FinfoDetector};
+use function Bermuda\String\{str_starts_with, str_slice, str_before};
+use Bermuda\Detector\{ExtensionDetector, FinfoDetector, MimeTypeDetector};
 use League\Flysystem\{
     DirectoryAttributes,
     DirectoryListing,
@@ -18,6 +18,8 @@ use League\Flysystem\{
 
 /**
  * @mixin FilesystemOperator
+ * @property-read FilesystemOperator $operator
+ * @property-read MimeTypeDetector $detector
  */
 final class Flysystem
 {
@@ -42,6 +44,14 @@ final class Flysystem
         throw new BadMethodCallException(
             sprintf('Method %s doesnt exists from %s', $name, __CLASS__)
         );
+    }
+    
+    public function __get(string $name)
+    {
+        return match ($name) {
+            'operator' => $this->operator,
+            'detector' => $this->detector
+        };
     }
 
     /**
@@ -176,6 +186,27 @@ final class Flysystem
     {
         return $content !== null ? File::create($filename, $content, $this)
             : Directory::create($filename, $this);
+    }
+
+    /**
+     * @param string $filename
+     * @param string $content
+     * @return File
+     * @throws FilesystemException
+     */
+    public function createFile(string $filename, string $content = ''): File
+    {
+        return File::create($filename, $content, $this);
+    }
+
+    /**
+     * @param string $location
+     * @return Directory
+     * @throws FilesystemException
+     */
+    public function createDirectory(string $location): Directory
+    {
+        return Directory::create($location, $this);
     }
 
     /**
