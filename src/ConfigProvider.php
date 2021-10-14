@@ -4,7 +4,9 @@ namespace Bermuda\Flysystem;
 
 use Bermuda\Detector\FinfoDetector;
 use Bermuda\Detector\ExtensionDetector;
+use Psr\Container\ContainerInterface;
 use League\Flysystem\FilesystemOperator;
+
 use function Bermuda\Config\cget;
 
 final class ConfigProvider extends \Bermuda\Config\ConfigProvider
