@@ -86,7 +86,7 @@ final class Directory extends AbstractFile implements Countable
         try {
             return self::open($location, $system);
         } catch (NoSuchFile) {
-            ($system = self::system($system))->create($location);
+            ($system = self::system($system))->operator->createDirectory($location);
             return self::open($location, $system);
         }
     }
