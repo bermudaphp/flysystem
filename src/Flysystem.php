@@ -66,7 +66,7 @@ final class Flysystem
         }
 
         return $this->operator->fileExists($location) 
-            && str_contains($this->mimeType($filename), $type);
+            && str_contains($this->mimeType($location), $type);
     }
 
     /**
