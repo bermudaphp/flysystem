@@ -37,7 +37,7 @@ final class Flysystem
             return call_user_func_array([$this->operator, $name], $arguments);
         }
 
-        if (str_start_with($name, 'is')) {
+        if (str_starts_with($name, 'is')) {
             return $this->isFile($arguments[0], str_slice(2));
         }
 
