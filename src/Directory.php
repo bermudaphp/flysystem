@@ -5,6 +5,8 @@ namespace Bermuda\Flysystem;
 use Countable;
 use Generator;
 use League\Flysystem\FilesystemException;
+use function Bermuda\String\str_match;
+use function Bermuda\String\str_match_any;
 
 final class Directory extends AbstractFile implements Countable
 {
@@ -196,6 +198,30 @@ final class Directory extends AbstractFile implements Countable
         }
 
         return $count;
+    }
+
+    /**
+     * @param string|array $pattern
+     * @return Directory[]|File[]
+     * @throws FilesystemException
+     */
+    public function only(string|array $pattern): array
+    {
+        return $this->listContents(filter: static function(AbstractFile $file) use ($pattern) {
+            return $file->match(is_array($pattern) ? $pattern : [$pattern]);
+        });
+    }
+
+    /**
+     * @param string|array $pattern
+     * @return Directory[]|File[]
+     * @throws FilesystemException
+     */
+    public function except(string|array $pattern): array
+    {
+        return $this->listContents(filter: static function(AbstractFile $file) use ($pattern) {
+            return !$file->match(is_array($pattern) ? $pattern : [$pattern]);
+        });
     }
 
     /**
