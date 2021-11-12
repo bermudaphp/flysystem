@@ -5,6 +5,7 @@ namespace Bermuda\Flysystem;
 use Bermuda\Arrayable;
 use Bermuda\String\Stringable;
 use Webmozart\PathUtil\Path;
+use function Bermuda\String\str_match_any;
 
 final class Location implements Stringable, Arrayable
 {
@@ -12,6 +13,15 @@ final class Location implements Stringable, Arrayable
     {
         $this->path = empty($path) ? '/'
             : Path::canonicalize($this->path);
+    }
+
+    /**
+     * @param string[]|string $pattern
+     * @return bool
+     */
+    public function match(array|string $pattern): bool
+    {
+        return str_match_any(!is_array($pattern) ? [$pattern] : $pattern, $this->path);
     }
 
     /**
