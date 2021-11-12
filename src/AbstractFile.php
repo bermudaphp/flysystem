@@ -28,6 +28,15 @@ abstract class AbstractFile implements Stringable, Arrayable, IteratorAggregate
         return $system ?? new Flysystem;
     }
 
+    /**
+     * @param string|array $pattern
+     * @return bool
+     */
+    final public function match(string|array $pattern): bool
+    {
+        return $this->location->match($pattern);
+    }
+
     final public function getPath(): string
     {
         return $this->path === null ?
