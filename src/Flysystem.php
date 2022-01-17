@@ -167,13 +167,7 @@ final class Flysystem
     public function fileExtension(string $filename): string
     {
         $content = $this->operator->read($filename);
-        $result = $this->detactor->detectExtension($content);
-
-        if (str_contains($result, '/')) {
-            return str_before($result, '/');
-        }
-
-        return $result;
+        return $this->detactor->detectExtension($content);
     }
 
     /**
