@@ -2,6 +2,7 @@
 
 namespace Bermuda\Flysystem;
 
+use Bermuda\String\StringHelper;
 use Countable;
 use Generator;
 use League\Flysystem\FilesystemException;
@@ -241,8 +242,12 @@ final class Directory extends AbstractFile implements Countable
      * @return File|self
      * @throws FilesystemException
      */
-    public function createFile(string $location, string $content = ''): File
+    public function createFile(string $location = null, string $content = ''): File
     {
+        if ($location == null) {
+            $location = StringHelper::filename($this->flysystem->detector->detectExtension($content));
+        }
+
         return File::create($this->location->append($location), $content, $this->flysystem);
     }
 
