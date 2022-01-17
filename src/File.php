@@ -238,7 +238,7 @@ class File extends AbstractFile implements StreamInterface
         $system = self::system($system);
 
         if ($filename === null) {
-            $extension = $system->extension($content, true);
+            $extension = $system->detector->detectExtension($content);
             $filename = StringHelper::filename($extension);
 
             $system->write($filename, $content);
