@@ -6,7 +6,7 @@ use finfo;
 use Carbon\Carbon;
 use BadMethodCallException;
 use function Bermuda\String\{str_starts_with, str_slice, str_before};
-use Bermuda\Detector\{ExtensionDetector, FinfoDetector, MimeTypeDetector};
+use Bermuda\Detector\{Detector, ExtensionDetector, FinfoDetector, MimeTypeDetector};
 use League\Flysystem\{
     DirectoryAttributes,
     DirectoryListing,
@@ -19,7 +19,7 @@ use League\Flysystem\{
 /**
  * @mixin FilesystemOperator
  * @property-read FilesystemOperator $operator
- * @property-read MimeTypeDetector $detector
+ * @property-read Detector $detector
  */
 final class Flysystem
 {
