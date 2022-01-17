@@ -7,6 +7,7 @@ use Bermuda\String\StringHelper;
 use League\Flysystem\FilesystemException;
 use Psr\Http\Message\StreamInterface;
 use RuntimeException;
+use function Bermuda\String\str_before;
 use function error_get_last;
 use function feof;
 use function fseek;
@@ -239,8 +240,9 @@ class File extends AbstractFile implements StreamInterface
 
         if ($filename === null) {
             $extension = $system->detector->detectExtension($content);
+            
             $filename = StringHelper::filename($extension);
-
+            
             $system->write($filename, $content);
             return self::open($filename, $system, $bytesPerIteration);
         }
