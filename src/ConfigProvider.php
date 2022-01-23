@@ -6,9 +6,9 @@ use Bermuda\Detector\FinfoDetector;
 use Bermuda\Detector\ExtensionDetector;
 use League\Flysystem\FilesystemOperator;
 use Psr\Container\ContainerInterface;
-use function Bermuda\Config\cget;
+use Bermuda\Config\ConfigProvider as AbstractProvider;
 
-final class ConfigProvider extends \Bermuda\Config\ConfigProvider
+final class ConfigProvider extends AbstractProvider
 {
     /**
      * @inheritDoc
@@ -17,9 +17,10 @@ final class ConfigProvider extends \Bermuda\Config\ConfigProvider
     {
         return [
             Flysystem::class => static fn(ContainerInterface $container) => new Flysystem(
-                cget($container, FilesystemOperator::class, static fn() => OperatorFactory::makeLocal(), true),
-                cget($container, ExtensionDetector::class, static fn() => new FinfoDetector(), true)
-            )
+                $container->get(FilesystemOperator::class), $container->get(ExtensionDetector::class)
+            ),
+            ExtensionDetector::class => static fn() => new FinfoDetector(),
+            FilesystemOperator::class => static fn() => OperatorFactory::makeLocal()
         ];
     }
     
