@@ -24,6 +24,7 @@ class File extends AbstractFile implements StreamInterface
      * @var resource
      */
     private $fh = null;
+    private ?int $currentLine = null;
     private ?bool $isWritable = null;
     private ?bool $isSeekable = null;
     private ?bool $isReadable = null;
@@ -395,6 +396,51 @@ class File extends AbstractFile implements StreamInterface
     final public function eof(): bool
     {
         return $this->fh === null || feof($this->fh);
+    }
+    
+    /**
+     * @param int|null $line
+     * @return string
+     */
+    public function readLine(int $line = null): string
+    {
+        if ($line == null) {
+            $line = $this->currentLine ?? 1;
+        }
+
+        if ($line < 1) {
+            throw new RuntimeException('Line number pointer cannot be less than 1');
+        }
+
+        if ($this->currentLine == null || $this->currentLine > $line) {
+            $this->rewind();
+            $this->currentLine = 1;
+        }
+
+        for (; $line >= $this->currentLine; $this->currentLine ++) {
+            if ($this->eof()) {
+                throw new RuntimeException("End of file reached on line $this->currentLine. No further reading possible");
+            }
+
+            $content = fgets($this->fh);
+        }
+
+        return $content;
+    }
+
+    /**
+     * @param int $startLine
+     * @param int $endLine
+     * @param bool $returnArray
+     * @return array|string
+     */
+    public function readLines(int $startLine, int $endLine, bool $returnArray = false): array|string
+    {
+        for ($result[$startLine] = $this->readLine($startLine); $endLine >= $this->currentLine;) {
+            $result[$this->currentLine] = $this->readLine();
+        }
+
+        return $returnArray ? $result : implode('', $result);
     }
 
     /**
