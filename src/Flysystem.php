@@ -144,7 +144,7 @@ final class Flysystem
     public function lastModified(string $location, bool $asCarbon = true): int|CarbonInterface
     {
         $stamp = $this->operator->lastModified($location);
-        return $asCarbon ? Clock::timestamp($stamp) : $stamp ;
+        return $asCarbon ? Clock::create($stamp) : $stamp ;
     }
 
     /**
