@@ -2,8 +2,8 @@
 
 namespace Bermuda\Flysystem;
 
-use Carbon\Carbon;
 use Bermuda\Arrayable;
+use Carbon\CarbonInterface;
 use IteratorAggregate;
 use Bermuda\String\Stringable;
 use League\Flysystem\FilesystemException;
@@ -58,10 +58,10 @@ abstract class AbstractFile implements Stringable, Arrayable, IteratorAggregate
     }
 
     /**
-     * @return int
+     * @return int|CarbonInterface
      * @throws FilesystemException
      */
-    final public function lastModified(bool $asCarbon = true): int|Carbon
+    final public function lastModified(bool $asCarbon = true): int|CarbonInterface
     {
         $timestamp = $this->flysystem->lastModified($this->location);
         return $asCarbon ? Carbon::createFromTimestamp($timestamp) : $timestamp;
