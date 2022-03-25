@@ -63,8 +63,7 @@ abstract class AbstractFile implements Stringable, Arrayable, IteratorAggregate
      */
     final public function lastModified(bool $asCarbon = true): int|CarbonInterface
     {
-        $timestamp = $this->flysystem->lastModified($this->location);
-        return $asCarbon ? Carbon::createFromTimestamp($timestamp) : $timestamp;
+        return $this->flysystem->lastModified($this->location, $asCarbon);
     }
 
     /**
@@ -85,7 +84,6 @@ abstract class AbstractFile implements Stringable, Arrayable, IteratorAggregate
     final public function visibility(string $visibility = null): string
     {
         $value = $this->flysystem->visibility($this->location);
-
         if ($visibility !== null) {
             $this->flysystem->setVisibility($this->location, $visibility);
         }
