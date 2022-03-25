@@ -2,9 +2,9 @@
 
 namespace Bermuda\Flysystem;
 
-use Bermuda\Clock\Clock;
 use finfo;
-use Carbon\Carbon;
+use Bermuda\Clock\Clock;
+use Carbon\CarbonInterface;
 use BadMethodCallException;
 use function Bermuda\String\{str_starts_with, str_slice, str_before, str_contains};
 use Bermuda\Detector\{Detector, FinfoDetector, MimeTypeDetector};
@@ -139,9 +139,9 @@ final class Flysystem
     /**
      * @param string $location
      * @param bool $asCarbon
-     * @return int|Carbon
+     * @return int|CarbonInterface
      */
-    public function lastModified(string $location, bool $asCarbon = true): int|Carbon
+    public function lastModified(string $location, bool $asCarbon = true): int|CarbonInterface
     {
         $stamp = $this->operator->lastModified($location);
         return $asCarbon ? Clock::timestamp($stamp) : $stamp ;
