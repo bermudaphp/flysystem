@@ -2,11 +2,12 @@
 
 namespace Bermuda\Flysystem;
 
+use Bermuda\Clock\Clock;
 use finfo;
 use Carbon\Carbon;
 use BadMethodCallException;
 use function Bermuda\String\{str_starts_with, str_slice, str_before, str_contains};
-use Bermuda\Detector\{Detector, ExtensionDetector, FinfoDetector, MimeTypeDetector};
+use Bermuda\Detector\{Detector, FinfoDetector, MimeTypeDetector};
 use League\Flysystem\{
     DirectoryAttributes,
     DirectoryListing,
@@ -24,7 +25,7 @@ use League\Flysystem\{
 final class Flysystem
 {
     public function __construct(private ?FilesystemOperator     $operator = null,
-                                private ?ExtensionDetector      $detector = null
+                                private ?Detector     $detector = null
     )
     {
         $this->operator = $operator ?? OperatorFactory::makeLocal();
@@ -142,7 +143,8 @@ final class Flysystem
      */
     public function lastModified(string $location, bool $asCarbon = true): int|Carbon
     {
-        return $this->open($location)->lastModified($asCarbon);
+        $stamp = $this->operator->lastModified($location);
+        return $asCarbon ? Clock::timestamp($stamp) : $stamp ;
     }
 
     /**
