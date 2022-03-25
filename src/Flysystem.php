@@ -5,7 +5,7 @@ namespace Bermuda\Flysystem;
 use finfo;
 use Carbon\Carbon;
 use BadMethodCallException;
-use function Bermuda\String\{str_starts_with, str_slice, str_before};
+use function Bermuda\String\{str_starts_with, str_slice, str_before, str_contains};
 use Bermuda\Detector\{Detector, ExtensionDetector, FinfoDetector, MimeTypeDetector};
 use League\Flysystem\{
     DirectoryAttributes,
@@ -66,7 +66,7 @@ final class Flysystem
         }
 
         return $this->operator->fileExists($location) 
-            && str_contains($this->mimeType($location), $type);
+            && str_contains($this->mimeType($location), $type, insensitive: true);
     }
 
     /**
