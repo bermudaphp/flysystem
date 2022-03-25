@@ -167,7 +167,7 @@ final class Flysystem
     public function fileExtension(string $filename): string
     {
         $content = $this->operator->read($filename);
-        return $this->detactor->detectExtension($content);
+        return $this->detector->detectExtension($content);
     }
 
     /**
