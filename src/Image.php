@@ -13,8 +13,7 @@ final class Image extends File
      */
     public function getWidth(): int
     {
-        if ($this->width == null)
-        {
+        if ($this->width == null) {
             $this->setImageWidthAndImageHeight();
         }
 
@@ -27,8 +26,7 @@ final class Image extends File
      */
     public function getHeight(): int
     {
-        if ($this->height == null)
-        {
+        if ($this->height == null) {
             $this->setImageWidthAndImageHeight();
         }
 
@@ -37,7 +35,7 @@ final class Image extends File
 
     public function toArray(): array
     {
-        return array_merge(parent::toArray(), ['width' => $this->width, 'height' => $this->height]);
+        return array_merge(parent::toArray(), ['width' => $this->getWidth(), 'height' => $this->getHeight()]);
     }
 
     /**
