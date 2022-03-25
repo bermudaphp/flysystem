@@ -44,7 +44,7 @@ final class Image extends File
      */
     private function setImageWidthAndImageHeight(): void
     {
-        $result = getimagesizefromstring($this->getContents());
+        $result = getimagesizefromstring((string) $this);
         $this->width = $result[0]; $this->height = $result[1];
     }
 }
