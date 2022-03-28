@@ -8,12 +8,9 @@ use IteratorAggregate;
 use Bermuda\String\Stringable;
 use League\Flysystem\FilesystemException;
 
-/**
- * @property-read Location location
- */
 abstract class AbstractFile implements Stringable, Arrayable, IteratorAggregate
 {
-    protected Location $location;
+    public readonly Location $location;
 
     protected ?string $name = null;
     protected ?string $path = null;
