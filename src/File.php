@@ -25,7 +25,7 @@ class File extends AbstractFile implements StreamInterface
      */
     private $fh = null;
     private ?int $currentLine = null;
-    private ?bool $isWritable = null;
+
     private ?bool $isSeekable = null;
     private ?bool $isReadable = null;
 
@@ -55,30 +55,23 @@ class File extends AbstractFile implements StreamInterface
             $this->fh = $this->flysystem->readStream($this->location);
             $meta = stream_get_meta_data($this->fh);
             $this->isSeekable = $meta['seekable'] && 0 === fseek($this->fh, 0, SEEK_CUR);
-
             $this->isReadable = match ($meta['mode']) {
                 'r', 'w+', 'r+', 'x+', 'c+', 'rb', 'w+b', 'r+b', 'x+b',
                 'c+b', 'rt', 'w+t', 'r+t', 'x+t', 'c+t', 'a+' => true,
-                default => false
-            };
-
-            $this->isWritable = match ($meta['mode']) {
-                'w', 'w+', 'rw', 'r+', 'x+', 'c+', 'wb', 'w+b', 'r+b',
-                'x+b', 'c+b', 'w+t', 'r+t', 'x+t', 'c+t', 'a', 'a+' => true,
                 default => false
             };
         }
     }
 
     /**
-     * @return resource|null
+     * @return resource
      */
     public function getHandler()
     {
         if ($this->fh == null) {
             $this->initFileHandler();
         }
-        
+
         return $this->fh;
     }
 
@@ -104,23 +97,18 @@ class File extends AbstractFile implements StreamInterface
     }
 
     /**
-     * @param string $string
+     * @param string|\Stringable $content
      * @return int
      * @throws RuntimeException
      */
-    final public function write($string): int
+    final public function write($content, array $config = []): int
     {
-        $this->isDetached();
-
-        if (!$this->isWritable) {
-            throw new RuntimeException('Cannot write to a non-writable file');
+        if (!is_string($content) && !$content instanceof \Stringable) {
+            throw new InvalidArgumentException('Argument [content] must be a string or instance of \Stringable');
         }
 
-        if (($length = @fwrite($this->fh, $string)) === false) {
-            throw new RuntimeException('Unable to write to file: ' . (error_get_last()['message'] ?? ''));
-        }
-
-        return $length;
+        $this->flysystem->write((string) $this->location, $content, $config);
+        return strlen($content);
     }
 
     private function isDetached(): void
@@ -382,7 +370,6 @@ class File extends AbstractFile implements StreamInterface
         $fh = $this->fh;
         $this->fh =
         $this->isReadable =
-        $this->isWritable =
         $this->isSeekable = null;
 
         return $fh;
@@ -476,7 +463,7 @@ class File extends AbstractFile implements StreamInterface
      */
     final public function isWritable(): bool
     {
-        return $this->isWritable;
+        return true;
     }
 
     /**
