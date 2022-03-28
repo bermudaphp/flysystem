@@ -43,13 +43,13 @@ class File extends AbstractFile implements StreamInterface
     )
     {
         parent::__construct($filename, $flysystem);
-        $this->setFh();
+        $this->initFileHandler();
     }
 
     /**
      * @throws FilesystemException
      */
-    private function setFh(): void
+    private function initFileHandler(): void
     {
         if ($this->fh == null) {
             $this->fh = $this->flysystem->readStream($this->location);
@@ -68,6 +68,18 @@ class File extends AbstractFile implements StreamInterface
                 default => false
             };
         }
+    }
+
+    /**
+     * @return resource|null
+     */
+    public function getHandler()
+    {
+        if ($this->fh == null) {
+            $this->initFileHandler();
+        }
+        
+        return $this->fh;
     }
 
     /**
@@ -176,7 +188,7 @@ class File extends AbstractFile implements StreamInterface
         $this->flysystem->move($this->location, $destination);
         $this->location = $destination;
 
-        $this->setFh();
+        $this->initFileHandler();
         $this->name = null;
         $this->path = null;
 
