@@ -245,7 +245,11 @@ final class Directory extends AbstractFile implements Countable
     public function createFile(string $location = null, string $content = ''): File
     {
         if ($location == null) {
-            $location = StringHelper::filename($this->flysystem->detector->detectExtension($content));
+            $ext = $this->flysystem->detector->detectExtension($content);
+            do {
+                $location = StringHelper::filename($ext);
+            }
+            while ($this->exists($location));
         }
 
         return File::create($this->location->append($location), $content, $this->flysystem);
